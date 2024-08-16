@@ -1,6 +1,7 @@
 ﻿using MediaPlayer.BLL;
 using MediaPlayer.BLL.Services;
 using MediaPlayer.DAL.Entities;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 namespace MediaPlayer.UI
@@ -11,6 +12,7 @@ namespace MediaPlayer.UI
     public partial class MainWindow : Window
     {
         private MedieFileService _mediaFileService = new MedieFileService();
+        private PlayQueueService _playQueueService = new PlayQueueService();
         public MainWindow()
         {
             InitializeComponent();
@@ -31,6 +33,7 @@ namespace MediaPlayer.UI
         {
             MultiAdd.Content = "Add File";
             MultiHeaderTitle.Content = "Play Queue";
+            FillQueueFileList();
         }
         private void SliderValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
@@ -72,17 +75,18 @@ namespace MediaPlayer.UI
             MediaFileList.ItemsSource = _mediaFileService.GetAllMediaFiles().AsEnumerable().Reverse();
         }
 
-
-        //trước khi tắt app thì nó thực hiện lưu recent sóng xuống file json
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        private void FillQueueFileList()
         {
-
+            MediaFileList.ItemsSource = null;
+            MediaFileList.ItemsSource = _playQueueService.PlayQueue;
         }
+
+
 
         private void OpenFile()
         {
             Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
-            openFileDialog.Filter = "Music files (*.mp3;*.mp4)|*.mp3;*.mp4|All files (*.*)|*.*";
+            openFileDialog.Filter = Utils.COMMON_MEDIAFILE;
             if (openFileDialog.ShowDialog() == true)
             {
                 string filePath = openFileDialog.FileName;
@@ -95,7 +99,10 @@ namespace MediaPlayer.UI
                 MediaFile newFile = Utils.GetPropertiesFromFilePath(filePath);
                 TitleCurSong.Text = newFile.Title;
                 ArtistCurSong.Text = newFile.Artists;
+                Debug.WriteLine(newFile.Artists);
 
+                // set lastPlayedAt
+                newFile.LastPlayedAt = DateTime.Now;
                 //add vào Media File List
                 _mediaFileService.AddMediaFile(newFile);
 
@@ -108,7 +115,21 @@ namespace MediaPlayer.UI
             }
         }
 
-
+        private void AddFile()
+        {
+            Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
+            openFileDialog.Filter = Utils.COMMON_MEDIAFILE;
+            if (openFileDialog.ShowDialog() == true)
+            {
+                string filePath = openFileDialog.FileName;
+                MediaFile newFile = Utils.GetPropertiesFromFilePath(filePath);
+                // set lastPlayedAt
+                newFile.LastPlayedAt = DateTime.Now;
+                //add queue
+                _playQueueService.AddASong(newFile);
+            }
+            FillQueueFileList();
+        }
         private void MultiAdd_Click(object sender, RoutedEventArgs e)
         {
             if (MultiAdd.Content.Equals("Open File"))
@@ -117,7 +138,7 @@ namespace MediaPlayer.UI
             }
             else if (MultiAdd.Content.Equals("Add File"))
             {
-
+                AddFile();
             }
             else if (MultiAdd.Content.Equals("Create Playlist"))
             {

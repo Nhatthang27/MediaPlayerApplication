@@ -6,7 +6,12 @@ namespace MediaPlayer.BLL.Services
     {
         public List<MediaFile> PlayQueue { get; set; }
 
-        public void AddASong(MediaFile song) => PlayQueue.Add(song);
+        public void AddASong(MediaFile song)
+        {
+            if (PlayQueue == null)
+                PlayQueue = new List<MediaFile>();
+            PlayQueue.Add(song);
+        }
 
     }
 }

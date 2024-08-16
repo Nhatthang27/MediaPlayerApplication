@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MediaPlayer"
         mc:Ignorable="d"
-        Title="Media Player" Height="480" Width="957" WindowStartupLocation="CenterScreen" ResizeMode="NoResize" Loaded="Window_Loaded" Closing="Window_Closing">
+        Title="Media Player" Height="480" Width="957" WindowStartupLocation="CenterScreen" ResizeMode="NoResize" Loaded="Window_Loaded">
     <Grid x:Name="ParentGrid" Background="#44444444">
         <!--Screen, play queue and recent list-->
         <Grid x:Name="MainGrid" Background="Black" Margin="153,0,0,0" Height="362" VerticalAlignment="Top" RenderTransformOrigin="0.51,0.403">
@@ -39,9 +39,15 @@
                 <ListView x:Name="MediaFileList" Height="293" BorderThickness="0" Foreground="White" Background="#363434" Width="803">
                     <ListView.ItemTemplate>
                         <DataTemplate>
-                            <StackPanel Orientation="Horizontal" Margin="40,30,0,0">
-                                <TextBlock Text="{Binding Title}" VerticalAlignment="Center" Width="650" TextTrimming="CharacterEllipsis"/>
-                                <TextBlock Text="{Binding Duration}" VerticalAlignment="Center" Width="100"/>
+                            <StackPanel Orientation="Horizontal" Margin="10">
+                                <Button x:Name="PlayInListButton" Background="Transparent" Width="60" FontWeight="ExtraBold" BorderThickness="0" HorizontalAlignment="Center">
+                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xF5B0;" FontSize="15"  Foreground="White"/>
+                                </Button>
+                                <TextBlock Text="{Binding Title}" VerticalAlignment="Center" Width="500" TextTrimming="CharacterEllipsis" HorizontalAlignment="Stretch"/>
+                                <TextBlock Text="{Binding Duration}" VerticalAlignment="Center" Width="100" HorizontalAlignment="Stretch"/>
+                                <Button x:Name="RemoveInListButton" Background="Transparent" Width="60" FontWeight="ExtraBold" BorderThickness="0" HorizontalAlignment="Center">
+                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE74D;" FontSize="15"  Foreground="White"/>
+                                </Button>
                             </StackPanel>
                         </DataTemplate>
                     </ListView.ItemTemplate>

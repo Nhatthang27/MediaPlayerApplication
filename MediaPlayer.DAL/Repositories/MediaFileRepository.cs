@@ -9,6 +9,7 @@ namespace MediaPlayer.DAL.Repositories
         {
             _context = new MediaPlayerDBContext();
             _context.MediaFiles.Add(entity);
+            _context.SaveChanges();
         }
 
         public void Delete(MediaFile entity)
