@@ -14,7 +14,7 @@ namespace MediaPlayer.DAL.Repositories
 
         public void Delete(MediaFile entity)
         {
-            throw new NotImplementedException();
+
         }
 
         public IEnumerable<MediaFile> GetAll()
@@ -28,6 +28,13 @@ namespace MediaPlayer.DAL.Repositories
             throw new NotImplementedException();
         }
 
+        public void UpdateLastPlayedAt(MediaFile mediaFile, bool featureStatus)
+        {
+            if (featureStatus)
+                mediaFile.LastPlayedAt = DateTime.Now;
+            else mediaFile.LastPlayedAt = null;
+            _context.SaveChanges();
+        }
         public void Update(MediaFile entity)
         {
             throw new NotImplementedException();

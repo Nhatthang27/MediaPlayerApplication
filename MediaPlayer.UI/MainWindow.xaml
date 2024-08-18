@@ -21,7 +21,7 @@
                 <MediaElement Name="mediaElementVideo"
                       LoadedBehavior="Manual"
                       UnloadedBehavior="Stop"
-                      Stretch="Uniform" 
+                      Stretch="Uniform" MediaOpened="mediaElementVideo_MediaOpened"
                          />
             </Grid>
 
@@ -43,12 +43,12 @@
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" Margin="10">
-                                <Button x:Name="PlayInListButton" Background="Transparent" Width="60" FontWeight="ExtraBold" BorderThickness="0" HorizontalAlignment="Center">
+                                <Button x:Name="PlayInListButton" Tag="{Binding}" Background="Transparent" Width="60" FontWeight="ExtraBold" BorderThickness="0" HorizontalAlignment="Center">
                                     <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xF5B0;" FontSize="15"  Foreground="White"/>
                                 </Button>
                                 <TextBlock Text="{Binding Title}" VerticalAlignment="Center" Width="500" TextTrimming="CharacterEllipsis" HorizontalAlignment="Stretch"/>
                                 <TextBlock Text="{Binding Duration}" VerticalAlignment="Center" Width="100" HorizontalAlignment="Stretch"/>
-                                <Button x:Name="RemoveInListButton" Background="Transparent" Width="60" FontWeight="ExtraBold" BorderThickness="0" HorizontalAlignment="Center">
+                                <Button x:Name="RemoveInListButton" Tag="{Binding}" Background="Transparent" Width="60" FontWeight="ExtraBold" BorderThickness="0" HorizontalAlignment="Center" Click="RemoveInListButton_Click">
                                     <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE74D;" FontSize="15"  Foreground="White"/>
                                 </Button>
                             </StackPanel>
@@ -68,18 +68,16 @@
 
         <!-- thanh điều hướng các bài nhạc bottom-->
         <Grid x:Name="BottomGrid" Background="#242323" Grid.ZIndex="1" Height="139" VerticalAlignment="Top" Margin="0,451,0,0" RenderTransformOrigin="0.5,0.471">
-            <Slider Name="gradientSlider" 
-        Minimum="0" Maximum="100" 
-        Value="0"
-        Height="28" Width="1060" 
-        VerticalAlignment="Top" HorizontalAlignment="Center"
-        ValueChanged="SliderValueChanged" Margin="0,7,0,0">
-                <Slider.Background>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                        <GradientStop Color="Transparent" Offset="0"/>
-                    </LinearGradientBrush>
-                </Slider.Background>
-            </Slider>
+            <Grid>
+                <Slider Name="progressSlider"
+                Minimum="0" Maximum="100"
+                Height="28" Width="760"
+                VerticalAlignment="Top" HorizontalAlignment="Center"
+                ValueChanged="progressSlider_ValueChanged" />
+
+                <TextBlock Name="lblTimeElapsed" Text="00:00" VerticalAlignment="Top" HorizontalAlignment="Left" FontSize="15" Foreground="White" Margin="170,0,0,0"/>
+                <TextBlock Name="lblTotalTime" Text="00:00" VerticalAlignment="Top" HorizontalAlignment="Right" FontSize="15" Foreground="White" Margin="0,0,170,0"/>
+            </Grid>
 
             <Button x:Name="TitleButton" Margin="0,26,891,0" Background="Transparent" FontWeight="Bold" BorderThickness="0" Cursor="Hand" Click="TitleButton_Click" RenderTransformOrigin="0.5,0.5" >
                 <Button.RenderTransform>
