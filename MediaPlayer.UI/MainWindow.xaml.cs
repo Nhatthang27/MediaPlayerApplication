@@ -19,6 +19,8 @@ namespace MediaPlayer.UI
 	{
 		private MedieFileService _mediaFileService = new MedieFileService();
 		private PlayQueueService _playQueueService = new PlayQueueService();
+		private int _currentSongIndex = 0;
+		private Point _dragStartPoint;
 		private MediaFile _curMediaFile = null;
 		private Visibility _buttonVisibility = Visibility.Visible;
 		public MainWindow()
@@ -163,6 +165,7 @@ namespace MediaPlayer.UI
 			else
 			{
 				MessageBox.Show("File format doesnot support!", "Open Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+
 			}
 		}
 
@@ -278,7 +281,7 @@ namespace MediaPlayer.UI
 			}
 		}
 		//handle sắp xếp thứ tự bài hát trong list queue
-		private Point _dragStartPoint;
+		
 
 		private void MediaFileList_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
 		{
@@ -297,6 +300,7 @@ namespace MediaPlayer.UI
 				ListView listView = sender as ListView;
 				if (listView != null)
 				{
+					//find which mediafile at the place where mouse pressed
 					ListViewItem listViewItem = FindAncestor<ListViewItem>((DependencyObject)e.OriginalSource);
 					if (listViewItem != null)
 					{
@@ -306,6 +310,7 @@ namespace MediaPlayer.UI
 				}
 			}
 		}
+		//Handle when you press mouse at any element of the ListViewItem such as button play, name,...
 		private static T FindAncestor<T>(DependencyObject current) where T : DependencyObject
 		{
 			while (current != null)
@@ -318,6 +323,7 @@ namespace MediaPlayer.UI
 			}
 			return null;
 		}
+		//event drag mouse
 		private void MediaFileList_DragOver(object sender, DragEventArgs e)
 		{
 			e.Effects = DragDropEffects.Move;
@@ -332,7 +338,7 @@ namespace MediaPlayer.UI
 				ListViewItem targetItem = GetNearestContainer(e.OriginalSource);
 				if (targetItem == null) return;
 				MediaFile target = listView.ItemContainerGenerator.ItemFromContainer(targetItem) as MediaFile;
-				//MediaFile target = GetNearestContainer(e.OriginalSource) as MediaFile;
+				
 				if (droppedData != null && target != null && !ReferenceEquals(droppedData, target))
 				{
 					if (_playQueueService.PlayQueue != null)
@@ -362,5 +368,56 @@ namespace MediaPlayer.UI
 			return current as ListViewItem;
 		}
 
+		//Handle: track the current playing song
+		
+
+		private void PlayCurrentSong()
+		{
+			if (_playQueueService.PlayQueue != null && _playQueueService.PlayQueue.Count > 0)
+			{
+				var currentSong = _playQueueService.PlayQueue[_currentSongIndex];
+				
+			}
+		}
+		private void NextButton_Click(object sender, RoutedEventArgs e)
+		{
+			if (_playQueueService.PlayQueue != null)
+			{
+				//if _playQueueService.PlayQueue.Count equal (_currentSongIndex + 1) 
+				//then remainder = 0 => return to the first song of list
+				
+				_currentSongIndex = (_currentSongIndex + 1) % _playQueueService.PlayQueue.Count;
+				                //then auto increment the index 
+
+				// Wrap around if at the end
+				PlayCurrentSong();
+			}
+			else
+			{
+				MessageBox.Show("There are no next songs in the queue!");
+			}
+		}
+
+		private void PrevButton_Click(object sender, RoutedEventArgs e)
+		{
+			if (_playQueueService.PlayQueue != null)
+			{
+				if(_currentSongIndex != 0)
+				{
+					_currentSongIndex = (_currentSongIndex - 1) % _playQueueService.PlayQueue.Count;
+					// Wrap around if at the end
+					PlayCurrentSong();
+				}
+				else
+				{
+					MessageBox.Show("There are no previous songs in the queue!");
+				}
+
+			}
+			else
+			{
+				MessageBox.Show("There are no previous songs in the queue!");
+			}
+		}
 	}
 }
