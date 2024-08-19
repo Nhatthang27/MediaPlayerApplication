@@ -39,7 +39,13 @@
                     <Label Grid.Column="0" x:Name="MultiHeaderTitle" Content="" Foreground="White" FontSize="40" FontWeight="Bold" HorizontalAlignment="Left" />
                     <Button x:Name="MultiAdd" Content="" Width="128" Background="#FFD6511E" Foreground="White" FontWeight="Bold" HorizontalAlignment="Left" VerticalAlignment="Top" Height="39" Margin="866,14,0,0" Click="MultiAdd_Click"/>
                 </Grid>
-                <ListView x:Name="MediaFileList" Height="342" BorderThickness="0" Foreground="White" Background="#363434" Width="999" RenderTransformOrigin="0.509,0.451">
+                <ListView x:Name="MediaFileList" Height="342" BorderThickness="0" Foreground="White" Background="#363434" Width="999" RenderTransformOrigin="0.509,0.451"  
+                 MouseMove="MediaFileList_MouseMove"
+                          PreviewMouseLeftButtonUp="MediaFileList_PreviewMouseLeftButtonDown"
+                          PreviewMouseLeftButtonDown="MediaFileList_PreviewMouseLeftButtonDown"
+          DragOver="MediaFileList_DragOver"
+          Drop="MediaFileList_Drop"
+          AllowDrop="True">
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" Margin="10" >
@@ -49,7 +55,7 @@
                                 <TextBlock Text="{Binding FileName}" VerticalAlignment="Center" Width="500" TextTrimming="CharacterEllipsis" HorizontalAlignment="Stretch"/>
                                 <TextBlock Text="{Binding Artists}" VerticalAlignment="Center" Width="200" HorizontalAlignment="Stretch"/>
                                 <TextBlock Text="{Binding Duration}" VerticalAlignment="Center" Width="100" HorizontalAlignment="Stretch"/>
-                                <Button x:Name="RemoveInListButton" Background="Transparent" Width="60" FontWeight="ExtraBold" BorderThickness="0" HorizontalAlignment="Center" Visibility="Visible">
+                                <Button x:Name="RemoveInListButton" Background="Transparent" Width="60" FontWeight="ExtraBold" BorderThickness="0" HorizontalAlignment="Center" Click="RemoveInListButton_Click">
                                     <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE74D;" FontSize="15"  Foreground="White"/>
                                 </Button>
                                 <Button x:Name="AddToQueueFromHomeBtn" Background="Transparent" Width="60" FontWeight="ExtraBold" BorderThickness="0" HorizontalAlignment="Center" MouseEnter="AddToQueueFromHomeBtn_MouseEnter" MouseLeave="AddToQueueFromHomeBtn_MouseLeave">
@@ -74,7 +80,7 @@
         <!--thanh điều hướng left OpenFileButton, OpenPlayQueueButton-->
         <Grid x:Name="LeftGrid" HorizontalAlignment="Left" Height="451" VerticalAlignment="Top" Width="158" Background="#1f1c1c">
             <Button x:Name="HomeButton" Content="Home" Background="#FFD6511E" Foreground="White" FontWeight="Bold" Margin="23,54,26,338" Click="HomeButton_Click"/>
-            <Button x:Name="PlayQueueButton" Content="Play Queue" Background="#FFD6511E" Foreground="White" FontWeight="Bold" Margin="23,161,26,231" Click="PlayQueueButton_Click"/>
+            <Button x:Name="PlayQueueButton" Content="Queue" Background="#FFD6511E" Foreground="White" FontWeight="Bold" Margin="23,161,26,231" Click="PlayQueueButton_Click"/>
             <Button x:Name="PlaylistButton" Content="Playlists" Background="#FFD6511E" Foreground="White" FontWeight="Bold" Margin="23,267,26,127" Click="PlaylistButton_Click"/>
         </Grid>
 

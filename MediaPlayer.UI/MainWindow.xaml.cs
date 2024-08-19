@@ -239,6 +239,29 @@ namespace MediaPlayer.UI
 				MessageBox.Show($"{mediaFile.FileName} has been added to the queue.");
 			}
 		}
+		private void RemoveInListButton_Click(object sender, RoutedEventArgs e)
+		{
+			// Get the Button that was clicked
+			Button button = sender as Button;
+			if (button != null)
+			{
+				// Get the corresponding MediaFile item
+				var mediaFile = button.DataContext as MediaFile;
+				if (mediaFile != null )
+				{
+					//handle nút xóa ở trang queue
+					if (_playQueueService.PlayQueue != null)
+					{
+						_playQueueService.PlayQueue.Remove(mediaFile);
+
+						// Refresh the ListView to reflect the removal
+						MediaFileList.Items.Refresh();
+					}
+					//handle nút xóa ở trang khác
+					
+				}
+			}
+		}
 		private void MultiAdd_Click(object sender, RoutedEventArgs e)
 		{
 			if (MultiAdd.Content.Equals("Open File"))
@@ -254,5 +277,90 @@ namespace MediaPlayer.UI
 				CreateAPlaylist();
 			}
 		}
+		//handle sắp xếp thứ tự bài hát trong list queue
+		private Point _dragStartPoint;
+
+		private void MediaFileList_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+		{
+			_dragStartPoint = e.GetPosition(null);
+		}
+		private void MediaFileList_MouseMove(object sender, MouseEventArgs e)
+		{
+			Point currentPosition = e.GetPosition(null);
+
+			//Check if the drag distance is significant enough
+			//xử lý con chuột ở mỗi hàng mediafile
+			if (e.LeftButton == MouseButtonState.Pressed &&
+				Math.Abs(currentPosition.X - _dragStartPoint.X) > SystemParameters.MinimumHorizontalDragDistance &&
+				Math.Abs(currentPosition.Y - _dragStartPoint.Y) > SystemParameters.MinimumVerticalDragDistance)
+			{
+				ListView listView = sender as ListView;
+				if (listView != null)
+				{
+					ListViewItem listViewItem = FindAncestor<ListViewItem>((DependencyObject)e.OriginalSource);
+					if (listViewItem != null)
+					{
+						MediaFile mediaFile = (MediaFile)listView.ItemContainerGenerator.ItemFromContainer(listViewItem);
+						DragDrop.DoDragDrop(listViewItem, mediaFile, DragDropEffects.Move);
+					}
+				}
+			}
+		}
+		private static T FindAncestor<T>(DependencyObject current) where T : DependencyObject
+		{
+			while (current != null)
+			{
+				if (current is T)
+				{
+					return (T)current;
+				}
+				current = VisualTreeHelper.GetParent(current);
+			}
+			return null;
+		}
+		private void MediaFileList_DragOver(object sender, DragEventArgs e)
+		{
+			e.Effects = DragDropEffects.Move;
+			e.Handled = true;
+		}
+		private void MediaFileList_Drop(object sender, DragEventArgs e)
+		{
+			if (e.Data.GetDataPresent(typeof(MediaFile)))
+			{
+				MediaFile droppedData = e.Data.GetData(typeof(MediaFile)) as MediaFile;
+				ListView listView = sender as ListView;
+				ListViewItem targetItem = GetNearestContainer(e.OriginalSource);
+				if (targetItem == null) return;
+				MediaFile target = listView.ItemContainerGenerator.ItemFromContainer(targetItem) as MediaFile;
+				//MediaFile target = GetNearestContainer(e.OriginalSource) as MediaFile;
+				if (droppedData != null && target != null && !ReferenceEquals(droppedData, target))
+				{
+					if (_playQueueService.PlayQueue != null)
+					{
+						int removedIdx = _playQueueService.PlayQueue.IndexOf(droppedData);
+						int targetIdx = _playQueueService.PlayQueue.IndexOf(target);
+
+						if (removedIdx != -1 && targetIdx != -1)
+						{
+							_playQueueService.PlayQueue.RemoveAt(removedIdx);
+							_playQueueService.PlayQueue.Insert(targetIdx, droppedData);
+							MediaFileList.Items.Refresh();
+						}
+					}
+				}	
+					
+			}
+		}
+		// Helper method to get the nearest ListViewItem
+		private static ListViewItem GetNearestContainer(object originalSource)
+		{
+			var current = originalSource as UIElement;
+			while (current != null && !(current is ListViewItem))
+			{
+				current = VisualTreeHelper.GetParent(current) as UIElement;
+			}
+			return current as ListViewItem;
+		}
+
 	}
 }
