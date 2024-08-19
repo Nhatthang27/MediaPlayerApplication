@@ -1,10 +1,17 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿
+
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using System.Runtime.CompilerServices;
+
 
 namespace MediaPlayer.DAL.Entities
 {
     public class MediaFile
     {
-        public int MediaFileId { get; set; }  // Khóa chính
+
+
+		public int MediaFileId { get; set; }  // Khóa chính
 
 
         public string FileName { get; set; }  // Tên tệp
