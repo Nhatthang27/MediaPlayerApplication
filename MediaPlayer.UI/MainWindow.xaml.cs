@@ -15,15 +15,6 @@ namespace MediaPlayer.UI
     /// </summary>
     public partial class MainWindow : Window
     {
-        //nếu không phát file đang phát là file không phải video thì phát hình mặc định
-        private const string DEFAULT_IMAGE_PATH = "Resources/default.jpg";
-
-        private const string DEFAULT_VIDEO_PATH = "Resources/default.mp4";
-
-
-
-
-
         private MedieFileService _mediaFileService = new MedieFileService();
         private PlayQueueService _playQueueService = new PlayQueueService();
         private PlayStackService _playStackService = new PlayStackService();
@@ -166,7 +157,6 @@ namespace MediaPlayer.UI
         {
             MediaFileList.ItemsSource = null;
             MediaFileList.ItemsSource = mediaListFile;
-            MediaFileList.Items.Refresh();
         }
 
         //chạy được một bài hát từ đầu // dependence: OpenFile, Next, Previous, PlayInList
@@ -465,10 +455,9 @@ namespace MediaPlayer.UI
             if (_playQueueService.PlayQueue != null && _playQueueService.PlayQueue.Count > 1)
             {
                 _playStackService.PushToStack(_curMediaFile);
-                string filePath = _playQueueService.PlayQueue[1].FilePath;
+                _curMediaFile = _playQueueService.PlayQueue[1];
                 _playQueueService.RemoveAt(0);
-                RunFile(filePath);
-                _curMediaFile = _mediaFileService.GetMediaFileByFilePath(filePath);
+                RunFile(_curMediaFile.FilePath);
             }
             else
             {
@@ -483,7 +472,6 @@ namespace MediaPlayer.UI
                 _curMediaFile = _playStackService.PopFromStack();
                 RunFile(_curMediaFile.FilePath);
                 _playQueueService.AddPriority(_curMediaFile);
-                FillMediaFileList(_playQueueService.PlayQueue);
             }
             else
             {
@@ -632,6 +620,5 @@ namespace MediaPlayer.UI
                 MessageBox.Show("There are no next songs in the queue!");
             }
         }
-
     }
 }
