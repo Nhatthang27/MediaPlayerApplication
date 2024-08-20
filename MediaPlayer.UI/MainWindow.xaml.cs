@@ -411,8 +411,13 @@ namespace MediaPlayer.UI
                 ListViewItem targetItem = GetNearestContainer(e.OriginalSource);
                 if (targetItem == null) return;
                 MediaFile target = listView.ItemContainerGenerator.ItemFromContainer(targetItem) as MediaFile;
-
-                if (droppedData != null && target != null && !ReferenceEquals(droppedData, target))
+                //handle k được move song đang play
+				if (droppedData == _playQueueService.PlayQueue[_currentSongIndex])
+				{
+                    MessageBox.Show("The song is currently playing!", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+					return;
+				}
+				if (droppedData != null && target != null && !ReferenceEquals(droppedData, target))
                 {
                     if (_playQueueService.PlayQueue != null)
                     {
@@ -421,10 +426,25 @@ namespace MediaPlayer.UI
 
                         if (removedIdx != -1 && targetIdx != -1)
                         {
-                            _playQueueService.PlayQueue.RemoveAt(removedIdx);
-                            _playQueueService.PlayQueue.Insert(targetIdx, droppedData);
-                            MediaFileList.Items.Refresh();
-                        }
+							// Remove the item from the original position
+							_playQueueService.PlayQueue.RemoveAt(removedIdx);
+							// Insert it at the new position
+							_playQueueService.PlayQueue.Insert(targetIdx, droppedData);
+							if (_currentSongIndex > removedIdx && _currentSongIndex <= targetIdx)
+							{
+								// Adjust _currentSongIndex if the current song is after the dragged item
+								_currentSongIndex--;
+							}
+							else if (_currentSongIndex < removedIdx && _currentSongIndex >= targetIdx)
+							{
+								// Adjust _currentSongIndex if the current song is before the dragged item
+								_currentSongIndex++;
+							}
+							MediaFileList.Items.Refresh();
+							//_playQueueService.PlayQueue.RemoveAt(removedIdx);
+							//                     _playQueueService.PlayQueue.Insert(targetIdx, droppedData);
+							//                     MediaFileList.Items.Refresh();
+						}
                     }
                 }
 
@@ -476,7 +496,8 @@ namespace MediaPlayer.UI
             {
                 if (_currentSongIndex != 0)
                 {
-                    _currentSongIndex = (_currentSongIndex - 1) % _playQueueService.PlayQueue.Count;
+                    //_currentSongIndex = (_currentSongIndex - 1) % _playQueueService.PlayQueue.Count;
+                    _currentSongIndex--;
                     // Wrap around if at the end
                     PlayCurrentSong();
                 }
