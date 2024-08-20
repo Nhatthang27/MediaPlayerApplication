@@ -20,7 +20,7 @@
                        LoadedBehavior="Manual"
                        UnloadedBehavior="Stop"
                        MediaEnded="MediaPlayer_MediaEnded"
-                       Stretch="Uniform" MediaOpened="MediaElementVideo_MediaOpened" Visibility="Collapsed"
+                       Stretch="Uniform" MediaOpened="MediaElementVideo_MediaOpened" Visibility="Visible"
                           />    
             </Grid>
 
@@ -159,11 +159,13 @@
                     <fa:IconBlock FontSize="60" Icon="Pause" Foreground="White" RenderTransformOrigin="0.586,0.46" Width="84" Height="69"/>
                 </StackPanel>
             </Button>
-            <Button x:Name="VolumeButton" Margin="1039,43,97,30" Background="Transparent" FontWeight="ExtraBold" BorderThickness="0">
+            <Button x:Name="VolumeButton" Margin="1039,43,97,30" Background="Transparent" FontWeight="ExtraBold" BorderThickness="0" Click="VolumeButton_Click" MouseMove="VolumeButton_MouseMove" MouseLeave="VolumeButton_MouseLeave">
                 <StackPanel Orientation="Horizontal">
-                    <fa:IconBlock FontSize="20" Icon="VolumeUp" Foreground="White" VerticalAlignment="Center" Width="47"/>
+                    <fa:IconBlock x:Name="VolumeIconBlock" FontSize="20" Icon="VolumeUp" Foreground="White" VerticalAlignment="Center" Width="47"/>
                 </StackPanel>
             </Button>
+            <ProgressBar x:Name="VolumeProgressBar" Width="80" Minimum="0" Maximum="1" Height="10" Value="0.5" Margin="1120,72,28,57" MouseLeftButtonDown="VolumeProgressBar_MouseLeftButtonDown"
+                     MouseMove="VolumeProgressBar_MouseMove" Visibility="Collapsed"/>
         </Grid>
     </Grid>
 </Window>

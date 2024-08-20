@@ -620,5 +620,59 @@ namespace MediaPlayer.UI
             _playQueueService.AddPriority(_curMediaFile);
         }
 
+        private void VolumeProgressBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            AdjustVolume(e);
+        }
+
+        private void VolumeProgressBar_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                AdjustVolume(e);
+            }
+        }
+
+        private void AdjustVolume(MouseEventArgs e)
+        {
+            var pos = e.GetPosition(VolumeProgressBar);
+            double volume = (pos.X / VolumeProgressBar.ActualWidth);
+            VolumeProgressBar.Value = volume;
+            MediaElementVideo.Volume = VolumeProgressBar.Value;
+        }
+
+        private void VolumeButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (VolumeIconBlock.Icon == FontAwesome.Sharp.IconChar.VolumeUp)
+            {
+                MediaElementVideo.Volume = 0;
+                VolumeIconBlock.Icon = FontAwesome.Sharp.IconChar.VolumeMute;
+            } else
+            {
+                MediaElementVideo.Volume = VolumeProgressBar.Value;
+                VolumeIconBlock.Icon = FontAwesome.Sharp.IconChar.VolumeUp;
+            }
+
+        }
+
+        private void VolumeButton_MouseMove(object sender, MouseEventArgs e)
+        {
+            VolumeProgressBar.Visibility = Visibility.Visible;
+        }
+
+        private void VolumeButton_MouseLeave(object sender, MouseEventArgs e)
+        {
+            var mousePos = e.GetPosition(VolumeProgressBar);
+            var progressBarRect = new Rect(0, 0, VolumeProgressBar.ActualWidth, VolumeProgressBar.ActualHeight);
+
+            double limit = 10;
+
+            if (!progressBarRect.Contains(mousePos) &&
+                (mousePos.X < -limit || mousePos.X > VolumeProgressBar.ActualWidth + limit ||
+                mousePos.Y < -limit || mousePos.Y > VolumeProgressBar.ActualHeight + limit))
+            {
+                VolumeProgressBar.Visibility = Visibility.Collapsed;
+            }
+        }
     }
 }
