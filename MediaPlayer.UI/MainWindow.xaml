@@ -18,10 +18,11 @@
             </Grid.RowDefinitions>
 
             <Grid x:Name="Screen" Grid.ZIndex="1" HorizontalAlignment="Center" Height="379" VerticalAlignment="Top" Width="1080" RenderTransformOrigin="0.482,0.522" Margin="0,70,0,0" Grid.RowSpan="2">
-                <MediaElement Name="mediaElementVideo"
+                <MediaElement Name="MediaElementVideo"
                       LoadedBehavior="Manual"
                       UnloadedBehavior="Stop"
-                      Stretch="Uniform" MediaOpened="mediaElementVideo_MediaOpened"
+                      MediaEnded="MediaElementVideo_MediaEnded"
+                      Stretch="Uniform" MediaOpened="MediaElementVideo_MediaOpened"
                          />
             </Grid>
 
@@ -43,12 +44,12 @@
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" Margin="10">
-                                <Button x:Name="PlayInListButton" Tag="{Binding}" Background="Transparent" Width="60" FontWeight="ExtraBold" BorderThickness="0" HorizontalAlignment="Center">
-                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xF5B0;" FontSize="15"  Foreground="White"/>
+                                <Button x:Name="PlayInListButton" Tag="{Binding FilePath}" Grid.ZIndex="1" Background="Transparent" Width="60" FontWeight="ExtraBold" BorderThickness="0" HorizontalAlignment="Center" Click="PlayInListButton_Click">
+                                    <TextBlock x:Name="PlayInListButtonTextBox" FontFamily="Segoe MDL2 Assets" Text="&#xF5B0;" FontSize="15"  Foreground="White"/>
                                 </Button>
                                 <TextBlock Text="{Binding Title}" VerticalAlignment="Center" Width="500" TextTrimming="CharacterEllipsis" HorizontalAlignment="Stretch"/>
                                 <TextBlock Text="{Binding Duration}" VerticalAlignment="Center" Width="100" HorizontalAlignment="Stretch"/>
-                                <Button x:Name="RemoveInListButton" Tag="{Binding}" Background="Transparent" Width="60" FontWeight="ExtraBold" BorderThickness="0" HorizontalAlignment="Center" Click="RemoveInListButton_Click">
+                                <Button x:Name="RemoveInListButton" Tag="{Binding MediaFileId}" Background="Transparent" Width="60" FontWeight="ExtraBold" BorderThickness="0" HorizontalAlignment="Center" Click="RemoveInListButton_Click">
                                     <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE74D;" FontSize="15"  Foreground="White"/>
                                 </Button>
                             </StackPanel>
@@ -69,14 +70,16 @@
         <!-- thanh điều hướng các bài nhạc bottom-->
         <Grid x:Name="BottomGrid" Background="#242323" Grid.ZIndex="1" Height="139" VerticalAlignment="Top" Margin="0,451,0,0" RenderTransformOrigin="0.5,0.471">
             <Grid>
-                <Slider Name="progressSlider"
+                <Slider Name="ProgressSlider"
                 Minimum="0" Maximum="100"
                 Height="28" Width="760"
                 VerticalAlignment="Top" HorizontalAlignment="Center"
-                ValueChanged="progressSlider_ValueChanged" />
+                PreviewMouseDown="ProgressSlider_PreviewMouseDown"
+                PreviewMouseUp="ProgressSlider_PreviewMouseUp"
+                ValueChanged="ProgressSlider_ValueChanged" />
 
-                <TextBlock Name="lblTimeElapsed" Text="00:00" VerticalAlignment="Top" HorizontalAlignment="Left" FontSize="15" Foreground="White" Margin="170,0,0,0"/>
-                <TextBlock Name="lblTotalTime" Text="00:00" VerticalAlignment="Top" HorizontalAlignment="Right" FontSize="15" Foreground="White" Margin="0,0,170,0"/>
+                <TextBlock Name="TimeElapsedTextBlock" Text="00:00" VerticalAlignment="Top" HorizontalAlignment="Left" FontSize="15" Foreground="White" Margin="170,0,0,0"/>
+                <TextBlock Name="TotalTimeTextBlock" Text="00:00" VerticalAlignment="Top" HorizontalAlignment="Right" FontSize="15" Foreground="White" Margin="0,0,170,0"/>
             </Grid>
 
             <Button x:Name="TitleButton" Margin="0,26,891,0" Background="Transparent" FontWeight="Bold" BorderThickness="0" Cursor="Hand" Click="TitleButton_Click" RenderTransformOrigin="0.5,0.5" >
@@ -98,10 +101,10 @@
                     </Grid.RowDefinitions>
 
                     <!--Tiêu đề của bài hát-->
-                    <TextBlock x:Name="TitleCurSong" Text="Title" HorizontalAlignment="Center" Foreground="White" Margin="0,-2,0,12" Grid.Row="1" Width="215" FontSize="15" />
+                    <TextBlock x:Name="TitleCurSong" Text="" HorizontalAlignment="Center" Foreground="White" Margin="0,-2,0,12" Grid.Row="1" Width="215" FontSize="15" />
 
                     <!--Tên ca sĩ-->
-                    <TextBlock x:Name="ArtistCurSong" Text="Artist" HorizontalAlignment="Center" Foreground="White" Margin="0,49,0,-16" Grid.Row="1" Width="214" FontSize="15"/>
+                    <TextBlock x:Name="ArtistCurSong" Text="" HorizontalAlignment="Center" Foreground="White" Margin="0,49,0,-16" Grid.Row="1" Width="214" FontSize="15"/>
                 </Grid>
             </Button>
 

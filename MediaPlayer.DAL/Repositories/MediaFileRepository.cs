@@ -25,11 +25,13 @@ namespace MediaPlayer.DAL.Repositories
 
         public MediaFile GetById(int id)
         {
-            throw new NotImplementedException();
+            _context = new();
+            return _context.MediaFiles.Find(id);
         }
-
-        public void UpdateLastPlayedAt(MediaFile mediaFile, bool featureStatus)
+        public void UpdateLastPlayedAt(int id, bool featureStatus)
         {
+            _context = new MediaPlayerDBContext();
+            MediaFile mediaFile = _context.MediaFiles.Find(id);
             if (featureStatus)
                 mediaFile.LastPlayedAt = DateTime.Now;
             else mediaFile.LastPlayedAt = null;

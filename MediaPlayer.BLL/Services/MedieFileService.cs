@@ -25,7 +25,7 @@ namespace MediaPlayer.BLL.Services
             {
                 if (mediaF.FilePath == mediaFile.FilePath)
                 {
-                    _mediaFileRepo.UpdateLastPlayedAt(mediaF, true);
+                    _mediaFileRepo.UpdateLastPlayedAt(mediaF.MediaFileId, true);
                     isExisted = true;
                 }
             });
@@ -34,9 +34,14 @@ namespace MediaPlayer.BLL.Services
         }
 
         //delete recent a file 
-        public void RemoveAMediaFile(MediaFile mediaFile)
+        public void RemoveAMediaFile(int mediaFileId)
         {
-            _mediaFileRepo.UpdateLastPlayedAt(mediaFile, false);
+            _mediaFileRepo.UpdateLastPlayedAt(mediaFileId, false);
+        }
+
+        public void GetMediaFileById(int id)
+        {
+            _mediaFileRepo.GetById(id);
         }
     }
 }
