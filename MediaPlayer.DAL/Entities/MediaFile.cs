@@ -33,5 +33,10 @@ namespace MediaPlayer.DAL.Entities
 
         // Navigation property
         public ICollection<PlaylistItem> PlaylistItems { get; set; }  // Các mục liên kết với PlaylistItem
+
+        public override string? ToString()
+        {
+            return @$"{FilePath}";
+        }
     }
 }
