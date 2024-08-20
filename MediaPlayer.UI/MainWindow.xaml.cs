@@ -1,6 +1,8 @@
 ﻿using MediaPlayer.BLL;
 using MediaPlayer.BLL.Services;
 using MediaPlayer.DAL.Entities;
+using MediaPlayer.DAL.Repositories;
+using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
 namespace MediaPlayer.UI
@@ -12,6 +14,8 @@ namespace MediaPlayer.UI
     {
         private MedieFileService _mediaFileService = new MedieFileService();
         private PlayQueueService _playQueueService = new PlayQueueService();
+        private PlaylistService _playlistService = new PlaylistService();
+
         private MediaFile _curMediaFile = null;
         public MainWindow()
         {
@@ -19,7 +23,7 @@ namespace MediaPlayer.UI
         }
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            FillMediaFileList(_mediaFileService.GetAllMediaFiles().AsEnumerable().Reverse());
+            //FillMediaFileList(_mediaFileSer0.vice.GetAllMediaFiles().AsEnumerable().Reverse());
             HomeButton_Click(sender, e);
         }
         private void HomeButton_Click(object sender, RoutedEventArgs e)
@@ -32,6 +36,11 @@ namespace MediaPlayer.UI
         {
             MultiAdd.Content = "Create Playlist";
             MultiHeaderTitle.Content = "Playlist";
+
+            var playlists = _playlistService.GetAllPlaylist().ToList();
+
+            MediaFileList.ItemsSource = playlists;
+
             ShowItem(StPanelMediaFileList, Screen);
         }
         private void PlayQueueButton_Click(object sender, RoutedEventArgs e)
@@ -166,13 +175,10 @@ namespace MediaPlayer.UI
             FillMediaFileList(_playQueueService.PlayQueue);
         }
 
-        private void CreateAPlaylist()
-        {
-            //create a playlist
-        }
 
         private void MultiAdd_Click(object sender, RoutedEventArgs e)
         {
+
             if (MultiAdd.Content.Equals("Open File"))
             {
                 OpenFile();
@@ -183,8 +189,90 @@ namespace MediaPlayer.UI
             }
             else if (MultiAdd.Content.Equals("Create Playlist"))
             {
-                CreateAPlaylist();
+                if (PlaylistCreationGrid.Visibility == Visibility.Visible)
+                {
+                    PlaylistCreationGrid.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    PlaylistCreationGrid.Visibility = Visibility.Visible;
+                }
             }
         }
+
+
+        private void CreateAPlaylist(string name, DateTime createdAt)
+        {
+
+            List<Playlist> existingPlaylists = _playlistService.GetAllPlaylist().ToList();
+
+            string uniqueName = GetUniquePlaylistName(name, existingPlaylists);
+
+            Playlist playlist = new Playlist() { Title = uniqueName, CreatedAt = createdAt };
+
+            _playlistService.addPlaylist(playlist);
+
+            MessageBox.Show($"Playlist '{name}' created successfully on {createdAt}.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private string GetUniquePlaylistName(string baseName, List<Playlist> existingPlaylists)
+        {
+            string uniqueName = baseName;
+
+            int count = existingPlaylists.Count(p => p.Title == baseName || p.Title.StartsWith(baseName + "("));
+
+            if (count > 0)
+            {
+                uniqueName = $"{baseName}({count})";
+            }
+
+            return uniqueName;
+        }
+
+        private void CreatePlaylistButton_Click(object sender, RoutedEventArgs e)
+        {
+            string playlistName = PlaylistNameTextBox.Text.Trim();
+
+            if (string.IsNullOrEmpty(playlistName))
+            {
+                MessageBox.Show("Please enter a valid playlist name.", "Invalid Input", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            DateTime createdAt = DateTime.Now;
+
+            CreateAPlaylist(playlistName, createdAt);
+
+            PlaylistCreationGrid.Visibility = Visibility.Collapsed;
+
+            PlaylistButton_Click(sender, e);
+
+        }
+
+        private void RemoveInListButton_Click(object sender, RoutedEventArgs e)
+        {
+            Button button = sender as Button;
+            if (button != null)
+            {
+                var mediaFile  = button.DataContext as MediaFile;
+                if(mediaFile != null)
+                {
+                    if(_playQueueService.PlayQueue != null)
+                    {
+                        _playQueueService.PlayQueue.Remove(mediaFile);
+                        MediaFileList.Items.Refresh();
+                    }
+                }
+
+                var item = button.DataContext as Playlist;
+                if (item != null)
+                {
+                    _playlistService.Remove(item); // Remove the playlist from the repository
+                    MediaFileList.ItemsSource = _playlistService.GetAllPlaylist(); // Update ListView data source
+                    MediaFileList.Items.Refresh(); // Refresh the ListView
+                }
+
+            }
+        }   
+
     }
 }
