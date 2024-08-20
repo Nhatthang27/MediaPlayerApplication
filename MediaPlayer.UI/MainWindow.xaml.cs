@@ -19,6 +19,7 @@ namespace MediaPlayer.UI
 	{
 		private MedieFileService _mediaFileService = new MedieFileService();
 		private PlayQueueService _playQueueService = new PlayQueueService();
+		private PlaylistService _playlistService = new PlaylistService();
 		private int _currentSongIndex = 0;
 		private Point _dragStartPoint;
 		private MediaFile _curMediaFile = null;
@@ -27,7 +28,7 @@ namespace MediaPlayer.UI
 		{
 			InitializeComponent();
 
-			
+
 			mediaElementVideo.MediaEnded += MediaPlayer_MediaEnded;
 		}
 		private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -45,21 +46,27 @@ namespace MediaPlayer.UI
 		{
 			MultiAdd.Content = "Create Playlist";
 			MultiHeaderTitle.Content = "Playlist";
+
+			var playlists = _playlistService.GetAllPlaylist().ToList();
+
+
+			MediaFileList.ItemsSource = playlists;
+
 			ShowItem(StPanelMediaFileList, Screen);
-		}
+		}	
 		private void PlayQueueButton_Click(object sender, RoutedEventArgs e)
 		{
 			MultiAdd.Content = "Add File";
 			MultiHeaderTitle.Content = "Play Queue";
 			FillMediaFileList(_playQueueService.PlayQueue);
 			ShowItem(StPanelMediaFileList, Screen);
-			
-			
 
-			
+
+
+
 		}
-		
-		
+
+
 		private void SliderValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
 		{
 			//change base duration
@@ -126,10 +133,14 @@ namespace MediaPlayer.UI
 
 			//show screen
 			ShowItem(Screen, StPanelMediaFileList);
+			//cap nhat artist
+			//UpdateTitleAndArtist();
 
 			_curMediaFile = Utils.GetPropertiesFromFilePath(filePath);
 			// Nạp video vào MediaElement
 			mediaElementVideo.Source = new Uri(filePath, UriKind.RelativeOrAbsolute);
+			mediaElementVideo.Play();
+			_mediaFileService.AddMediaFile(_curMediaFile);
 			// Bắt đầu phát video
 			mediaElementVideo.Play();
 		}
@@ -205,9 +216,9 @@ namespace MediaPlayer.UI
 					var popup = stackPanel.Children.OfType<Popup>().FirstOrDefault();
 					if (popup != null)
 					{
-						
-							popup.IsOpen = true;
-						
+
+						popup.IsOpen = true;
+
 					}
 				}
 			}
@@ -222,7 +233,7 @@ namespace MediaPlayer.UI
 				if (stackPanel != null)
 				{
 					var popup = stackPanel.Children.OfType<Popup>().FirstOrDefault();
-					if (popup != null )
+					if (popup != null)
 					{
 						if (!popup.IsMouseOver && !button.IsMouseOver)
 							popup.IsOpen = false;
@@ -246,25 +257,34 @@ namespace MediaPlayer.UI
 		}
 		private void RemoveInListButton_Click(object sender, RoutedEventArgs e)
 		{
-			// Get the Button that was clicked
+
+			MessageBoxResult answer = MessageBox.Show("Do you really want to delete?", "Confirm?", MessageBoxButton.YesNo, MessageBoxImage.Question);
+			if (answer == MessageBoxResult.No)
+				return;
+
 			Button button = sender as Button;
 			if (button != null)
 			{
-				// Get the corresponding MediaFile item
 				var mediaFile = button.DataContext as MediaFile;
-				if (mediaFile != null )
+				if (mediaFile != null)
 				{
-					//handle nút xóa ở trang queue
 					if (_playQueueService.PlayQueue != null)
 					{
 						_playQueueService.PlayQueue.Remove(mediaFile);
-
-						// Refresh the ListView to reflect the removal
 						MediaFileList.Items.Refresh();
 					}
-					//handle nút xóa ở trang khác
-					
 				}
+				else
+				{
+					var playlist = button.DataContext as Playlist;
+					if (playlist != null)
+					{
+						_playlistService.Remove(playlist); // Remove the playlist from the repository
+						MediaFileList.ItemsSource = _playlistService.GetAllPlaylist(); // Update ListView data source
+						MediaFileList.Items.Refresh(); // Refresh the ListView
+					}
+				}
+
 			}
 		}
 		private void MultiAdd_Click(object sender, RoutedEventArgs e)
@@ -279,11 +299,18 @@ namespace MediaPlayer.UI
 			}
 			else if (MultiAdd.Content.Equals("Create Playlist"))
 			{
-				CreateAPlaylist();
+				if (PlaylistCreationGrid.Visibility == Visibility.Visible)
+				{
+					PlaylistCreationGrid.Visibility = Visibility.Collapsed;
+				}
+				else
+				{
+					PlaylistCreationGrid.Visibility = Visibility.Visible;
+				}
 			}
 		}
 		//handle sắp xếp thứ tự bài hát trong list queue
-		
+
 
 		private void MediaFileList_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
 		{
@@ -340,7 +367,7 @@ namespace MediaPlayer.UI
 				ListViewItem targetItem = GetNearestContainer(e.OriginalSource);
 				if (targetItem == null) return;
 				MediaFile target = listView.ItemContainerGenerator.ItemFromContainer(targetItem) as MediaFile;
-				
+
 				if (droppedData != null && target != null && !ReferenceEquals(droppedData, target))
 				{
 					if (_playQueueService.PlayQueue != null)
@@ -355,8 +382,8 @@ namespace MediaPlayer.UI
 							MediaFileList.Items.Refresh();
 						}
 					}
-				}	
-					
+				}
+
 			}
 		}
 		// Helper method to get the nearest ListViewItem
@@ -371,14 +398,14 @@ namespace MediaPlayer.UI
 		}
 
 		//Handle: track the current playing song
-		
+
 
 		private void PlayCurrentSong()
 		{
 			if (_playQueueService.PlayQueue != null && _playQueueService.PlayQueue.Count > 0)
 			{
 				var currentSong = _playQueueService.PlayQueue[_currentSongIndex];
-				
+				RunFile(currentSong.FilePath);
 			}
 		}
 		private void NextButton_Click(object sender, RoutedEventArgs e)
@@ -387,9 +414,10 @@ namespace MediaPlayer.UI
 			{
 				//if _playQueueService.PlayQueue.Count equal (_currentSongIndex + 1) 
 				//then remainder = 0 => return to the first song of list
-				
+
 				_currentSongIndex = (_currentSongIndex + 1) % _playQueueService.PlayQueue.Count;
-				                //then auto increment the index 
+				//_currentSongIndex++;
+				//then auto increment the index 
 
 				// Wrap around if at the end
 				PlayCurrentSong();
@@ -404,7 +432,7 @@ namespace MediaPlayer.UI
 		{
 			if (_playQueueService.PlayQueue != null)
 			{
-				if(_currentSongIndex != 0)
+				if (_currentSongIndex != 0)
 				{
 					_currentSongIndex = (_currentSongIndex - 1) % _playQueueService.PlayQueue.Count;
 					// Wrap around if at the end
@@ -426,9 +454,9 @@ namespace MediaPlayer.UI
 		//will call when the playpack end
 		private void MediaPlayer_MediaEnded(object sender, RoutedEventArgs e)
 		{
-			if (_playQueueService.PlayQueue != null )
-			{ 
-				if( _currentSongIndex != 0)
+			if (_playQueueService.PlayQueue != null)
+			{
+				if (_currentSongIndex != 0)
 				{
 					// Increment the index and wrap around if necessary
 					_currentSongIndex = (_currentSongIndex + 1) % _playQueueService.PlayQueue.Count;
@@ -439,5 +467,50 @@ namespace MediaPlayer.UI
 				}
 			}
 		}
+		private void CreatePlaylistButton_Click(object sender, RoutedEventArgs e)
+		{
+			string playlistName = PlaylistNameTextBox.Text.Trim();
+
+			if (string.IsNullOrEmpty(playlistName))
+			{
+				MessageBox.Show("Please enter a valid playlist name.", "Invalid Input", MessageBoxButton.OK, MessageBoxImage.Warning);
+				return;
+			}
+			DateTime createdAt = DateTime.Now;
+
+			CreateAPlaylist(playlistName, createdAt);
+
+			PlaylistCreationGrid.Visibility = Visibility.Collapsed;
+
+			PlaylistButton_Click(sender, e);
+
+		}
+		private void CreateAPlaylist(string name, DateTime createdAt)
+		{
+
+			List<Playlist> existingPlaylists = _playlistService.GetAllPlaylist().ToList();
+
+			string uniqueName = GetUniquePlaylistName(name, existingPlaylists);
+
+			Playlist playlist = new Playlist() { Title = uniqueName, CreatedAt = createdAt };
+
+			_playlistService.addPlaylist(playlist);
+
+			MessageBox.Show($"Playlist '{name}' created successfully on {createdAt}.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+		}
+		private string GetUniquePlaylistName(string baseName, List<Playlist> existingPlaylists)
+		{
+			string uniqueName = baseName;
+
+			int count = existingPlaylists.Count(p => p.Title == baseName || p.Title.StartsWith(baseName + "("));
+
+			if (count > 0)
+			{
+				uniqueName = $"{baseName}({count})";
+			}
+
+			return uniqueName;
+		}
+
 	}
 }
