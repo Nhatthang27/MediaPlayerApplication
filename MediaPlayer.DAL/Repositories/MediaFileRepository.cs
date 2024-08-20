@@ -1,6 +1,6 @@
-﻿using MediaPlayer.DAL.Data;
-using MediaPlayer.DAL.Entities;
+﻿using MediaPlayer.DAL.Entities;
 using MediaPlayer.DAL.Repositories.IRepository;
+using Microsoft.EntityFrameworkCore;
 
 namespace MediaPlayer.DAL.Repositories
 {

@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-
+//using Microsoft.Extensions.Configuration;
 using System.Configuration;
-namespace MediaPlayer.DAL.Data
+namespace MediaPlayer.DAL
 {
     public class MediaPlayerDBContext : DbContext
     {
@@ -15,27 +15,27 @@ namespace MediaPlayer.DAL.Data
 				optionsBuilder.UseSqlServer(connectionString);
 			}
 		}
-		private readonly string _connectionString;
-
-		//public MediaPlayerDBContext()
-		//{
-		//	// Load configuration from appsettings.json
-		//	var builder = new ConfigurationBuilder()
-		//		.SetBasePath(Directory.GetCurrentDirectory())
-		//		.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-		//	var configuration = builder.Build();
-
-		//	_connectionString = configuration.GetConnectionString("DefaultConnection");
-		//}
 		//protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 		//{
-		//	if (!optionsBuilder.IsConfigured)
-		//		optionsBuilder.UseSqlServer(_connectionString);
+		//	optionsBuilder.UseSqlServer(GetConnectionString());
 		//}
+		//private string GetConnectionString()
+		//{
+		//	IConfiguration config = new ConfigurationBuilder()
+		//		 .SetBasePath(Directory.GetCurrentDirectory())
+		//				.AddJsonFile("appsettings.json", true, true)
+		//				.Build();
+		//	var strConn = config["ConnectionStrings:DefaultConnectionString"];
+
+		//	return strConn;
+		//}
+
+
+
 		public DbSet<Entities.MediaFile> MediaFiles { get; set; }
         public DbSet<Entities.Playlist> Playlists { get; set; }
         public DbSet<Entities.PlaylistItem> PlaylistItems { get; set; }
 
-        
+
     }
 }

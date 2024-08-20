@@ -29,18 +29,18 @@ namespace MediaPlayer.UI
 			InitializeComponent();
 
 
-			mediaElementVideo.MediaEnded += MediaPlayer_MediaEnded;
+			MediaElementVideo.MediaEnded += MediaPlayer_MediaEnded;
 		}
 		private void Window_Loaded(object sender, RoutedEventArgs e)
 		{
-			FillMediaFileList(_mediaFileService.GetAllMediaFiles().AsEnumerable().Reverse());
+			FillMediaFileList(_mediaFileService.GetRecentMediaFiles().AsEnumerable().Reverse());
 			HomeButton_Click(sender, e);
 		}
 		private void HomeButton_Click(object sender, RoutedEventArgs e)
 		{
 			MultiAdd.Content = "Open File";
 			MultiHeaderTitle.Content = "Recent Files";
-			FillMediaFileList(_mediaFileService.GetAllMediaFiles().AsEnumerable().Reverse());
+			FillMediaFileList(_mediaFileService.GetRecentMediaFiles().AsEnumerable().Reverse());
 		}
 		private void PlaylistButton_Click(object sender, RoutedEventArgs e)
 		{
@@ -53,7 +53,7 @@ namespace MediaPlayer.UI
 			MediaFileList.ItemsSource = playlists;
 
 			ShowItem(StPanelMediaFileList, Screen);
-		}	
+		}
 		private void PlayQueueButton_Click(object sender, RoutedEventArgs e)
 		{
 			MultiAdd.Content = "Add File";
@@ -93,7 +93,7 @@ namespace MediaPlayer.UI
 		private void PauseButton_Click(object sender, RoutedEventArgs e)
 		{
 			SwapZIndex(PauseButton, PlayButton);
-			mediaElementVideo.Pause();
+			MediaElementVideo.Pause();
 		}
 
 		private void PlayButton_Click(object sender, RoutedEventArgs e)
@@ -101,7 +101,7 @@ namespace MediaPlayer.UI
 			if (_curMediaFile != null)
 			{
 				SwapZIndex(PlayButton, PauseButton);
-				mediaElementVideo.Play();
+				MediaElementVideo.Play();
 			}
 
 		}
@@ -115,7 +115,7 @@ namespace MediaPlayer.UI
 			}
 			else
 			{
-				FillMediaFileList(_mediaFileService.GetAllMediaFiles().AsEnumerable().Reverse());
+				FillMediaFileList(_mediaFileService.GetRecentMediaFiles().AsEnumerable().Reverse());
 			}
 		}
 
@@ -138,11 +138,11 @@ namespace MediaPlayer.UI
 
 			_curMediaFile = Utils.GetPropertiesFromFilePath(filePath);
 			// Nạp video vào MediaElement
-			mediaElementVideo.Source = new Uri(filePath, UriKind.RelativeOrAbsolute);
-			mediaElementVideo.Play();
+			MediaElementVideo.Source = new Uri(filePath, UriKind.RelativeOrAbsolute);
+			MediaElementVideo.Play();
 			_mediaFileService.AddMediaFile(_curMediaFile);
 			// Bắt đầu phát video
-			mediaElementVideo.Play();
+			MediaElementVideo.Play();
 		}
 
 		private void UpdateTitleAndArtist(MediaFile mediaFile)
@@ -193,8 +193,22 @@ namespace MediaPlayer.UI
 				// set lastPlayedAt
 				newFile.LastPlayedAt = DateTime.Now;
 				//add queue
-				_playQueueService.Add(newFile);
-
+				//if (_playQueueService.PlayQueue != null)
+				//{
+				//	//foreach (var m in _playQueueService.PlayQueue)
+				//	//{
+				//	//	if (m.FilePath == newFile.FilePath)
+				//	//	{
+				//	//		MessageBox.Show("This file is already in the queue.", "Duplicate File", MessageBoxButton.OK, MessageBoxImage.Warning);
+				//	//	return;
+				//	//	}
+						
+				//	//}
+					
+				//}
+				
+					_playQueueService.Add(newFile);
+				
 			}
 			FillMediaFileList(_playQueueService.PlayQueue);
 		}
@@ -367,6 +381,11 @@ namespace MediaPlayer.UI
 				ListViewItem targetItem = GetNearestContainer(e.OriginalSource);
 				if (targetItem == null) return;
 				MediaFile target = listView.ItemContainerGenerator.ItemFromContainer(targetItem) as MediaFile;
+				if (droppedData == _playQueueService.PlayQueue[_currentSongIndex])
+				{
+					MessageBox.Show("The song is currently playing!", "Select?", MessageBoxButton.OK, MessageBoxImage.Error);
+					return;
+				}
 
 				if (droppedData != null && target != null && !ReferenceEquals(droppedData, target))
 				{
