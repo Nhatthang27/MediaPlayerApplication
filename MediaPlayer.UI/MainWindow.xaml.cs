@@ -15,8 +15,18 @@ namespace MediaPlayer.UI
     /// </summary>
     public partial class MainWindow : Window
     {
+        //nếu không phát file đang phát là file không phải video thì phát hình mặc định
+        private const string DEFAULT_IMAGE_PATH = "Resources/default.jpg";
+
+        private const string DEFAULT_VIDEO_PATH = "Resources/default.mp4";
+
+
+
+
+
         private MedieFileService _mediaFileService = new MedieFileService();
         private PlayQueueService _playQueueService = new PlayQueueService();
+        private PlayStackService _playStackService = new PlayStackService();
         private PlaylistService _playlistService = new PlaylistService();
         private Point _dragStartPoint;
         private MediaFile _curMediaFile = null;
@@ -33,7 +43,7 @@ namespace MediaPlayer.UI
         {
             // Khởi tạo timer để cập nhật thời gian phát hiện tại
             timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromMilliseconds(1); // xác định khoảng thgian của mỗi lần tick
+            timer.Interval = TimeSpan.FromMilliseconds(500); // xác định khoảng thgian của mỗi lần tick
             timer.Tick += Timer_Tick;
         }
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -54,6 +64,7 @@ namespace MediaPlayer.UI
             MultiAdd.Content = "Open File";
             MultiHeaderTitle.Content = "Recent Files";
             UpdateTitleAndArtist();
+            ShowItem(StPanelMediaFileList, Screen);
             FillMediaFileList(_mediaFileService.GetRecentMediaFiles());
         }
         private void PlaylistButton_Click(object sender, RoutedEventArgs e)
@@ -102,7 +113,6 @@ namespace MediaPlayer.UI
             MediaElementVideo.Pause();
 
         }
-
 
         //chạy tiếp tục cur file
         private void PlayButton_Click(object sender, RoutedEventArgs e)
@@ -156,27 +166,25 @@ namespace MediaPlayer.UI
         {
             MediaFileList.ItemsSource = null;
             MediaFileList.ItemsSource = mediaListFile;
+            MediaFileList.Items.Refresh();
         }
 
-        //chạy được một bài hát từ đầu
+        //chạy được một bài hát từ đầu // dependence: OpenFile, Next, Previous, PlayInList
         private void RunFile(string filePath)
         {
+
             _curMediaFile = Utils.GetPropertiesFromFilePath(filePath);
 
             //Show pause button
             ShowItem(PauseButton, PlayButton);
 
-            //show screen
-            ShowItem(Screen, StPanelMediaFileList);
-            //cap nhat artist
-            //UpdateTitleAndArtist();
-
             //cập nhật MediaFileList, xoa de hien thi video
             FillMediaFileList(null);
+            //show screen
+            ShowItem(Screen, StPanelMediaFileList);
 
             //cap nhat artist
             UpdateTitleAndArtist();
-
 
             // Nạp video vào MediaElement
             MediaElementVideo.Source = new Uri(filePath, UriKind.RelativeOrAbsolute);
@@ -184,13 +192,11 @@ namespace MediaPlayer.UI
             // Bắt đầu phát video
             MediaElementVideo.Play();
 
-
             //add or update last time open
             _mediaFileService.AddMediaFile(_curMediaFile);
-
-            //sync to db
-            _curMediaFile = _mediaFileService.GetMediaFileByFilePath(filePath);
         }
+
+
         private void ProgressSlider_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             // Tạm thời dừng Timer khi người dùng bắt đầu kéo Slider
@@ -262,10 +268,12 @@ namespace MediaPlayer.UI
             if (openFileDialog.ShowDialog() == true)
             {
                 //remove queue priority
-                if (_playQueueService.PlayQueue != null && _playQueueService.PlayQueue.Count > 0)
-                    _playQueueService.RemoveAt(0);
+                _playQueueService.RemoveAt(0);
+
                 string filePath = openFileDialog.FileName;
                 RunFile(filePath);
+                _curMediaFile = _mediaFileService.GetMediaFileByFilePath(filePath);
+
                 //add queue priority
                 _playQueueService.AddPriority(_curMediaFile);
             }
@@ -291,7 +299,7 @@ namespace MediaPlayer.UI
         {
             //create a playlist
         }
-        //handle + icon on each media file
+        //handle + icon on each media file 
         private void AddToQueueFromHomeBtn_MouseEnter(object sender, MouseEventArgs e)
         {
             Button button = sender as Button;
@@ -342,6 +350,7 @@ namespace MediaPlayer.UI
                 // Optionally, show a message or update the UI
                 MessageBox.Show($"{mediaFile.FileName} has been added to the queue.");
             }
+            FillMediaFileList(_playQueueService.PlayQueue);
         }
         private void MultiAdd_Click(object sender, RoutedEventArgs e)
         {
@@ -452,17 +461,15 @@ namespace MediaPlayer.UI
         }
 
         //Handle: track the current playing song
-
         private void NextButton_Click(object sender, RoutedEventArgs e)
         {
             if (_playQueueService.PlayQueue != null && _playQueueService.PlayQueue.Count > 1)
             {
-                _playQueueService.PushToStack(_curMediaFile);
+                _playStackService.PushToStack(_curMediaFile);
                 string filePath = _playQueueService.PlayQueue[1].FilePath;
-                //remove queue priority
-                if (_playQueueService.PlayQueue != null && _playQueueService.PlayQueue.Count > 0)
-                    _playQueueService.RemoveAt(0);
+                _playQueueService.RemoveAt(0);
                 RunFile(filePath);
+                _curMediaFile = _mediaFileService.GetMediaFileByFilePath(filePath);
             }
             else
             {
@@ -472,10 +479,12 @@ namespace MediaPlayer.UI
 
         private void PrevButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_playQueueService.PlayedStack != null && _playQueueService.PlayedStack.Count > 0)
+            if (!_playStackService.IsStackEmpty())
             {
-                _curMediaFile = _playQueueService.PopFromStack();
+                _curMediaFile = _playStackService.PopFromStack();
                 RunFile(_curMediaFile.FilePath);
+                _playQueueService.AddPriority(_curMediaFile);
+                FillMediaFileList(_playQueueService.PlayQueue);
             }
             else
             {
@@ -489,11 +498,11 @@ namespace MediaPlayer.UI
         {
             if (_playQueueService.PlayQueue != null && _playQueueService.PlayQueue.Count > 1)
             {
-                _playQueueService.PushToStack(_curMediaFile);
+                _playStackService.PushToStack(_curMediaFile);
                 string filePath = _playQueueService.PlayQueue[1].FilePath;
-                //remove queue priority
                 _playQueueService.RemoveAt(0);
                 RunFile(filePath);
+                _curMediaFile = _mediaFileService.GetMediaFileByFilePath(filePath);
             }
             else
             {
@@ -596,15 +605,18 @@ namespace MediaPlayer.UI
 
             var mediaFile = button?.Tag as MediaFile;
 
-            if (_mode == 2)
+            //xoa cai được chọn nếu nó khong phải là cái đầu tiên trong queue
+            if (_mode == 2 && _playQueueService.GetIndexInQueue(mediaFile) != 0)
             {
                 _playQueueService.Remove(mediaFile);
             }
+            //chọn thằng đàu trong queue thì không thêm vào stack
+            if (_mode != 2 || _playQueueService.GetIndexInQueue(mediaFile) != 0)
+            {
+                _playStackService.PushToStack(_curMediaFile);
+            }
+            _playQueueService.Remove(_curMediaFile);
             RunFile(mediaFile.FilePath);
-            //remove queue priority
-            if (_playQueueService.PlayQueue != null && _playQueueService.PlayQueue.Count > 0)
-                _playQueueService.RemoveAt(0);
-            //add queue priority
             _playQueueService.AddPriority(_curMediaFile);
         }
 
