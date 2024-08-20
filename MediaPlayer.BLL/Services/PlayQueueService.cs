@@ -1,8 +1,4 @@
-﻿
-using AngleSharp.Dom;
-using MediaPlayer.DAL.Entities;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
+﻿using MediaPlayer.DAL.Entities;
 
 namespace MediaPlayer.BLL.Services
 {
@@ -10,30 +6,20 @@ namespace MediaPlayer.BLL.Services
 	{
 		public List<MediaFile> PlayQueue { get; set; }
 
-		public void Add(MediaFile mediaFile)
-		{
-			if (PlayQueue == null)
-			{
-				PlayQueue = new List<MediaFile>();
-			}
-			//else
-			//{
-			//	foreach (var m in PlayQueue)
-			//	{
-			//		if (mediaFile.FilePath == m.FilePath)
-			//		{
-			//			return;
-			//		}
-					
-			//	}
+        public void Add(MediaFile mediaFile)
+        {
+            if (PlayQueue == null)
+                PlayQueue = new List<MediaFile>();
+            PlayQueue.Add(mediaFile);
+        }
 
-			//}
+        public void AddPriority(MediaFile mediaFile)
+        {
+            if (PlayQueue == null)
+                PlayQueue = new List<MediaFile>();
+            //add at the beginning of PlayQueue
+            PlayQueue.Insert(0, mediaFile);
+        }
 
-			PlayQueue.Add(mediaFile);
-		}
-
-
-
-
-	}
+    }
 }
