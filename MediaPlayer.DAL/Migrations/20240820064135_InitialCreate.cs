@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace MediaPlayer.DAL.Migrations
 {
     /// <inheritdoc />
-    public partial class V0 : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -17,11 +17,11 @@ namespace MediaPlayer.DAL.Migrations
                 {
                     MediaFileId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    FileName = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
-                    FilePath = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    FileName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FilePath = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Duration = table.Column<TimeSpan>(type: "time", nullable: false),
                     Title = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
-                    Artists = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    Artists = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     LastPlayedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },

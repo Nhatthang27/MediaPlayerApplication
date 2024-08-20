@@ -3,11 +3,10 @@ using MediaPlayer.BLL.Services;
 using MediaPlayer.DAL.Entities;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Threading;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 //using System.Windows.Forms;
 namespace MediaPlayer.UI
 {
@@ -30,9 +29,6 @@ namespace MediaPlayer.UI
         public MainWindow()
         {
             InitializeComponent();
-
-
-            mediaElementVideo.MediaEnded += MediaPlayer_MediaEnded;
         }
         private void SetUpTimerMediaFile()
         {
@@ -56,10 +52,10 @@ namespace MediaPlayer.UI
             MultiHeaderTitle.Content = "Recent Files";
             UpdateTitleAndArtist();
             FillMediaFileList(_mediaFileService.GetRecentMediaFiles());
-            FillMediaFileList(_mediaFileService.GetAllMediaFiles().AsEnumerable().Reverse());
         }
         private void PlaylistButton_Click(object sender, RoutedEventArgs e)
         {
+            _mode = 3;
             MultiAdd.Content = "Create Playlist";
             MultiHeaderTitle.Content = "Playlist";
 
@@ -76,18 +72,6 @@ namespace MediaPlayer.UI
             MultiAdd.Content = "Add File";
             MultiHeaderTitle.Content = "Play Queue";
             FillMediaFileList(_playQueueService.PlayQueue);
-            ShowItem(StPanelMediaFileList, Screen);
-
-
-
-
-        }
-        private void PlaylistButton_Click(object sender, RoutedEventArgs e)
-        {
-            _mode = 3;
-            MultiAdd.Content = "Create Playlist";
-            MultiHeaderTitle.Content = "Playlist";
-            FillMediaFileList(null);
             ShowItem(StPanelMediaFileList, Screen);
         }
         private void SliderValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -230,10 +214,6 @@ namespace MediaPlayer.UI
                 ProgressSlider.Value = MediaElementVideo.Position.TotalSeconds;
             }
         }
-        private void MediaPlayer_MediaEnded(object sender, RoutedEventArgs e)
-        {
-
-        }
         private void MediaElementVideo_MediaOpened(object sender, RoutedEventArgs e)
         {
             // Kiểm tra xem media có một giá trị thời lượng hợp lệ hay không
@@ -353,38 +333,6 @@ namespace MediaPlayer.UI
                 MessageBox.Show($"{mediaFile.FileName} has been added to the queue.");
             }
         }
-        private void RemoveInListButton_Click(object sender, RoutedEventArgs e)
-        {
-
-            MessageBoxResult answer = MessageBox.Show("Do you really want to delete?", "Confirm?", MessageBoxButton.YesNo, MessageBoxImage.Question);
-            if (answer == MessageBoxResult.No)
-                return;
-
-            Button button = sender as Button;
-            if (button != null)
-            {
-                var mediaFile = button.DataContext as MediaFile;
-                if (mediaFile != null)
-                {
-                    if (_playQueueService.PlayQueue != null)
-                    {
-                        _playQueueService.PlayQueue.Remove(mediaFile);
-                        MediaFileList.Items.Refresh();
-                    }
-                }
-                else
-                {
-                    var playlist = button.DataContext as Playlist;
-                    if (playlist != null)
-                    {
-                        _playlistService.Remove(playlist); // Remove the playlist from the repository
-                        MediaFileList.ItemsSource = _playlistService.GetAllPlaylist(); // Update ListView data source
-                        MediaFileList.Items.Refresh(); // Refresh the ListView
-                    }
-                }
-
-            }
-        }
         private void MultiAdd_Click(object sender, RoutedEventArgs e)
         {
             if (MultiAdd.Content.Equals("Open File"))
@@ -408,8 +356,6 @@ namespace MediaPlayer.UI
             }
         }
         //handle sắp xếp thứ tự bài hát trong list queue
-
-
         private void MediaFileList_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             _dragStartPoint = e.GetPosition(null);
@@ -496,8 +442,6 @@ namespace MediaPlayer.UI
         }
 
         //Handle: track the current playing song
-
-
         private void PlayCurrentSong()
         {
             if (_playQueueService.PlayQueue != null && _playQueueService.PlayQueue.Count > 0)
@@ -606,9 +550,10 @@ namespace MediaPlayer.UI
             {
                 uniqueName = $"{baseName}({count})";
             }
+            return uniqueName;
         }
 
-        private void RemoveInListButton_Click(object sender, RoutedEventArgs e)
+        private void Recent_RemoveInListButton_Click(object sender, RoutedEventArgs e)
         {
             // Ép kiểu sender thành Button
             var button = sender as Button;
@@ -618,6 +563,56 @@ namespace MediaPlayer.UI
 
             _mediaFileService.RemoveAMediaFile(mediaFileId.Value);
             FillMediaFileList(_mediaFileService.GetRecentMediaFiles());
+        }
+
+        private void Queue_RemoveInListButton_Click(object sender, RoutedEventArgs e)
+        {
+
+            MessageBoxResult answer = MessageBox.Show("Do you really want to delete?", "Confirm?", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (answer == MessageBoxResult.No)
+                return;
+
+            Button button = sender as Button;
+            if (button != null)
+            {
+                var mediaFile = button.DataContext as MediaFile;
+                if (mediaFile != null)
+                {
+                    if (_playQueueService.PlayQueue != null)
+                    {
+                        _playQueueService.PlayQueue.Remove(mediaFile);
+                        MediaFileList.Items.Refresh();
+                    }
+                }
+                else
+                {
+                    var playlist = button.DataContext as Playlist;
+                    if (playlist != null)
+                    {
+                        _playlistService.Remove(playlist); // Remove the playlist from the repository
+                        MediaFileList.ItemsSource = _playlistService.GetAllPlaylist(); // Update ListView data source
+                        MediaFileList.Items.Refresh(); // Refresh the ListView
+                    }
+                }
+
+            }
+        }
+
+        private void RemoveInListButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_mode == 1)
+            {
+                Recent_RemoveInListButton_Click(sender, e);
+            }
+            else if (_mode == 2)
+            {
+                Queue_RemoveInListButton_Click(sender, e);
+            }
+            else
+            {
+                //playlist
+                //Queue_RemoveInListButton_Click(sender, e);
+            }
         }
 
         private void PlayInListButton_Click(object sender, RoutedEventArgs e)
