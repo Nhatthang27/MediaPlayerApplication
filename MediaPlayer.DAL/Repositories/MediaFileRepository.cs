@@ -42,5 +42,11 @@ namespace MediaPlayer.DAL.Repositories
         {
             throw new NotImplementedException();
         }
+
+        //get media file by filepath
+        public MediaFile GetMediaFile(string filepath)
+        {
+            return _context.MediaFiles.FirstOrDefault(file => file.FilePath == filepath);
+        }
     }
 }

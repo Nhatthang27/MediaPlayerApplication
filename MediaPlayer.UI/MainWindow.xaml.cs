@@ -18,7 +18,6 @@ namespace MediaPlayer.UI
         private MedieFileService _mediaFileService = new MedieFileService();
         private PlayQueueService _playQueueService = new PlayQueueService();
         private PlaylistService _playlistService = new PlaylistService();
-        private int _currentSongIndex = 0;
         private Point _dragStartPoint;
         private MediaFile _curMediaFile = null;
         private int _mode = 1;
@@ -43,6 +42,10 @@ namespace MediaPlayer.UI
             _curMediaFile = _mediaFileService.GetRecentMediaFiles().FirstOrDefault();
             if (_curMediaFile != null)
                 MediaElementVideo.Source = new Uri(_curMediaFile.FilePath, UriKind.RelativeOrAbsolute);
+            if (_curMediaFile != null)
+            {
+                _playQueueService.AddPriority(_curMediaFile);
+            }
             HomeButton_Click(sender, e);
         }
         private void HomeButton_Click(object sender, RoutedEventArgs e)
@@ -185,6 +188,8 @@ namespace MediaPlayer.UI
             //add or update last time open
             _mediaFileService.AddMediaFile(_curMediaFile);
 
+            //sync to db
+            _curMediaFile = _mediaFileService.GetMediaFileByFilePath(filePath);
         }
         private void ProgressSlider_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -256,8 +261,13 @@ namespace MediaPlayer.UI
             openFileDialog.Filter = Utils.COMMON_MEDIAFILE;
             if (openFileDialog.ShowDialog() == true)
             {
+                //remove queue priority
+                if (_playQueueService.PlayQueue != null && _playQueueService.PlayQueue.Count > 0)
+                    _playQueueService.RemoveAt(0);
                 string filePath = openFileDialog.FileName;
                 RunFile(filePath);
+                //add queue priority
+                _playQueueService.AddPriority(_curMediaFile);
             }
         }
 
@@ -442,27 +452,17 @@ namespace MediaPlayer.UI
         }
 
         //Handle: track the current playing song
-        private void PlayCurrentSong()
-        {
-            if (_playQueueService.PlayQueue != null && _playQueueService.PlayQueue.Count > 0)
-            {
-                var currentSong = _playQueueService.PlayQueue[_currentSongIndex];
-                RunFile(currentSong.FilePath);
-            }
-        }
+
         private void NextButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_playQueueService.PlayQueue != null)
+            if (_playQueueService.PlayQueue != null && _playQueueService.PlayQueue.Count > 1)
             {
-                //if _playQueueService.PlayQueue.Count equal (_currentSongIndex + 1) 
-                //then remainder = 0 => return to the first song of list
-
-                _currentSongIndex = (_currentSongIndex + 1) % _playQueueService.PlayQueue.Count;
-                //_currentSongIndex++;
-                //then auto increment the index 
-
-                // Wrap around if at the end
-                PlayCurrentSong();
+                _playQueueService.PushToStack(_curMediaFile);
+                string filePath = _playQueueService.PlayQueue[1].FilePath;
+                //remove queue priority
+                if (_playQueueService.PlayQueue != null && _playQueueService.PlayQueue.Count > 0)
+                    _playQueueService.RemoveAt(0);
+                RunFile(filePath);
             }
             else
             {
@@ -472,19 +472,10 @@ namespace MediaPlayer.UI
 
         private void PrevButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_playQueueService.PlayQueue != null)
+            if (_playQueueService.PlayedStack != null && _playQueueService.PlayedStack.Count > 0)
             {
-                if (_currentSongIndex != 0)
-                {
-                    _currentSongIndex = (_currentSongIndex - 1) % _playQueueService.PlayQueue.Count;
-                    // Wrap around if at the end
-                    PlayCurrentSong();
-                }
-                else
-                {
-                    MessageBox.Show("There are no previous songs in the queue!");
-                }
-
+                _curMediaFile = _playQueueService.PopFromStack();
+                RunFile(_curMediaFile.FilePath);
             }
             else
             {
@@ -496,17 +487,17 @@ namespace MediaPlayer.UI
         //will call when the playpack end
         private void MediaPlayer_MediaEnded(object sender, RoutedEventArgs e)
         {
-            if (_playQueueService.PlayQueue != null)
+            if (_playQueueService.PlayQueue != null && _playQueueService.PlayQueue.Count > 1)
             {
-                if (_currentSongIndex != 0)
-                {
-                    // Increment the index and wrap around if necessary
-                    _currentSongIndex = (_currentSongIndex + 1) % _playQueueService.PlayQueue.Count;
-
-                    // Get the next song
-                    var nextSong = _playQueueService.PlayQueue[_currentSongIndex];
-                    RunFile(nextSong.FilePath);
-                }
+                _playQueueService.PushToStack(_curMediaFile);
+                string filePath = _playQueueService.PlayQueue[1].FilePath;
+                //remove queue priority
+                _playQueueService.RemoveAt(0);
+                RunFile(filePath);
+            }
+            else
+            {
+                PauseButton_Click(sender, e);
             }
         }
         private void CreatePlaylistButton_Click(object sender, RoutedEventArgs e)
@@ -559,9 +550,9 @@ namespace MediaPlayer.UI
             var button = sender as Button;
 
             // Lấy đối tượng của phần tử từ thuộc tính Tag
-            var mediaFileId = button?.Tag as int?;
+            var mediaFile = button?.Tag as MediaFile;
 
-            _mediaFileService.RemoveAMediaFile(mediaFileId.Value);
+            _mediaFileService.RemoveAMediaFile(mediaFile.MediaFileId);
             FillMediaFileList(_mediaFileService.GetRecentMediaFiles());
         }
 
@@ -575,26 +566,10 @@ namespace MediaPlayer.UI
             Button button = sender as Button;
             if (button != null)
             {
-                var mediaFile = button.DataContext as MediaFile;
-                if (mediaFile != null)
-                {
-                    if (_playQueueService.PlayQueue != null)
-                    {
-                        _playQueueService.PlayQueue.Remove(mediaFile);
-                        MediaFileList.Items.Refresh();
-                    }
-                }
-                else
-                {
-                    var playlist = button.DataContext as Playlist;
-                    if (playlist != null)
-                    {
-                        _playlistService.Remove(playlist); // Remove the playlist from the repository
-                        MediaFileList.ItemsSource = _playlistService.GetAllPlaylist(); // Update ListView data source
-                        MediaFileList.Items.Refresh(); // Refresh the ListView
-                    }
-                }
-
+                var mediaFile = button?.Tag as MediaFile;
+                _playQueueService.Remove(mediaFile);
+                FillMediaFileList(_playQueueService.PlayQueue);
+                MediaFileList.Items.Refresh();
             }
         }
 
@@ -619,9 +594,18 @@ namespace MediaPlayer.UI
         {
             var button = sender as Button;
 
-            var filePath = button?.Tag as string;
+            var mediaFile = button?.Tag as MediaFile;
 
-            RunFile(filePath);
+            if (_mode == 2)
+            {
+                _playQueueService.Remove(mediaFile);
+            }
+            RunFile(mediaFile.FilePath);
+            //remove queue priority
+            if (_playQueueService.PlayQueue != null && _playQueueService.PlayQueue.Count > 0)
+                _playQueueService.RemoveAt(0);
+            //add queue priority
+            _playQueueService.AddPriority(_curMediaFile);
         }
 
     }
