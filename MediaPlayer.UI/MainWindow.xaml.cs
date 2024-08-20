@@ -411,7 +411,7 @@ namespace MediaPlayer.UI
                 ListViewItem targetItem = GetNearestContainer(e.OriginalSource);
                 if (targetItem == null) return;
                 MediaFile target = listView.ItemContainerGenerator.ItemFromContainer(targetItem) as MediaFile;
-                //handle k được move song đang play
+             //handle k được move song đang play
 				if (droppedData == _playQueueService.PlayQueue[_currentSongIndex])
 				{
                     MessageBox.Show("The song is currently playing!", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
