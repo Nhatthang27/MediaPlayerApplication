@@ -22,7 +22,7 @@
                       LoadedBehavior="Manual"
                       UnloadedBehavior="Stop"
                       Stretch="Uniform" 
-                         />
+                       MediaEnded="MediaPlayer_MediaEnded"  />
             </Grid>
 
 

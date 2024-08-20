@@ -27,6 +27,8 @@ namespace MediaPlayer.UI
 		{
 			InitializeComponent();
 
+			
+			mediaElementVideo.MediaEnded += MediaPlayer_MediaEnded;
 		}
 		private void Window_Loaded(object sender, RoutedEventArgs e)
 		{
@@ -417,6 +419,24 @@ namespace MediaPlayer.UI
 			else
 			{
 				MessageBox.Show("There are no previous songs in the queue!");
+			}
+		}
+
+		//handle auto move to next song when the current one end
+		//will call when the playpack end
+		private void MediaPlayer_MediaEnded(object sender, RoutedEventArgs e)
+		{
+			if (_playQueueService.PlayQueue != null )
+			{ 
+				if( _currentSongIndex != 0)
+				{
+					// Increment the index and wrap around if necessary
+					_currentSongIndex = (_currentSongIndex + 1) % _playQueueService.PlayQueue.Count;
+
+					// Get the next song
+					var nextSong = _playQueueService.PlayQueue[_currentSongIndex];
+					RunFile(nextSong.FilePath);
+				}
 			}
 		}
 	}
