@@ -36,5 +36,27 @@ namespace MediaPlayer.BLL.Services
         {
             return PlayQueue.IndexOf(mediaFile);
         }
+
+        public bool IsEmpty()
+        {
+            return PlayQueue == null || PlayQueue.Count == 0;
+        }
+
+
+        public void Shuffle()
+        {
+            if (PlayQueue != null && PlayQueue.Count > 1)
+            {
+                Random random = new Random();
+                //shuffle the list except first element
+                for (int i = 1; i < PlayQueue.Count; i++)
+                {
+                    int j = random.Next(i, PlayQueue.Count);
+                    MediaFile temp = PlayQueue[i];
+                    PlayQueue[i] = PlayQueue[j];
+                    PlayQueue[j] = temp;
+                }
+            }
+        }
     }
 }
