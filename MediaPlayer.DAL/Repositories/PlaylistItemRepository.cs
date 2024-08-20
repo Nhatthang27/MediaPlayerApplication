@@ -1,4 +1,6 @@
-﻿using MediaPlayer.DAL.Entities;
+﻿using MediaPlayer.DAL.Data;
+using MediaPlayer.DAL.Entities;
+using MediaPlayer.DAL.Repositories.IRepository;
 
 namespace MediaPlayer.DAL.Repositories
 {
@@ -7,7 +9,9 @@ namespace MediaPlayer.DAL.Repositories
         private MediaPlayerDBContext _context;
         public void Add(PlaylistItem entity)
         {
-            throw new NotImplementedException();
+            _context = new MediaPlayerDBContext();
+            _context.Add(entity);
+            _context.SaveChanges();
         }
 
         public void Delete(PlaylistItem entity)

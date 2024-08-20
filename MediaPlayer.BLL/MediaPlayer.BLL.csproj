@@ -13,5 +13,4 @@
   <ItemGroup>
     <ProjectReference Include="..\MediaPlayer.DAL\MediaPlayer.DAL.csproj" />
   </ItemGroup>
-
 </Project>

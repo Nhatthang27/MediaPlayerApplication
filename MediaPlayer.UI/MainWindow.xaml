@@ -8,13 +8,11 @@
         mc:Ignorable="d"
         Title="Media Player" Height="606" Width="1238" WindowStartupLocation="CenterScreen" ResizeMode="NoResize" Loaded="Window_Loaded">
     <Grid x:Name="ParentGrid" Background="#44444444">
-        <!--Screen, play queue and recent list-->
+        <!-- Screen, play queue, and recent list -->
         <Grid x:Name="MainGrid" Background="Black" Margin="158,0,0,0" Height="451" VerticalAlignment="Top" RenderTransformOrigin="0.505,0.525">
-            <!--Sắp xếp màn hình và queue đè lên nhau-->
             <Grid.RowDefinitions>
                 <RowDefinition Height="81*" />
                 <RowDefinition Height="100*"/>
-                <!--<RowDefinition Height="Auto" />-->
             </Grid.RowDefinitions>
 
             <Grid x:Name="Screen" Grid.ZIndex="1" HorizontalAlignment="Center" Height="379" VerticalAlignment="Top" Width="1080" RenderTransformOrigin="0.482,0.522" Margin="0,70,0,0" Grid.RowSpan="2">
@@ -26,32 +24,47 @@
                          />
             </Grid>
 
-
             <StackPanel x:Name="StPanelMediaFileList" Grid.ZIndex="2" Background="#363434" Grid.RowSpan="2">
-                <!--header-->
+                <!-- Header -->
                 <Grid Margin="10,0,10,10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
-                        <!-- Cột cho nhãn -->
                         <ColumnDefinition Width="Auto" />
-                        <!-- Cột cho nút -->
                     </Grid.ColumnDefinitions>
 
                     <Label Grid.Column="0" x:Name="MultiHeaderTitle" Content="" Foreground="White" FontSize="40" FontWeight="Bold" HorizontalAlignment="Left" />
                     <Button x:Name="MultiAdd" Content="" Width="128" Background="#FFD6511E" Foreground="White" FontWeight="Bold" HorizontalAlignment="Left" VerticalAlignment="Top" Height="39" Margin="866,14,0,0" Click="MultiAdd_Click"/>
                 </Grid>
-                <ListView x:Name="MediaFileList" Height="342" BorderThickness="0" Foreground="White" Background="#363434" Width="999" RenderTransformOrigin="0.509,0.451">
+                <ListView x:Name="MediaFileList" Height="342" BorderThickness="0" Foreground="White" Background="#363434" Width="999" RenderTransformOrigin="0.509,0.451"  
+                 MouseMove="MediaFileList_MouseMove"
+                          PreviewMouseLeftButtonUp="MediaFileList_PreviewMouseLeftButtonDown"
+                          PreviewMouseLeftButtonDown="MediaFileList_PreviewMouseLeftButtonDown"
+          DragOver="MediaFileList_DragOver"
+          Drop="MediaFileList_Drop"
+          AllowDrop="True">
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" Margin="10">
                                 <Button x:Name="PlayInListButton" Tag="{Binding FilePath}" Grid.ZIndex="1" Background="Transparent" Width="60" FontWeight="ExtraBold" BorderThickness="0" HorizontalAlignment="Center" Click="PlayInListButton_Click">
                                     <TextBlock x:Name="PlayInListButtonTextBox" FontFamily="Segoe MDL2 Assets" Text="&#xF5B0;" FontSize="15"  Foreground="White"/>
                                 </Button>
-                                <TextBlock Text="{Binding Title}" VerticalAlignment="Center" Width="500" TextTrimming="CharacterEllipsis" HorizontalAlignment="Stretch"/>
+                                <TextBlock Text="{Binding FileName}" VerticalAlignment="Center" Width="500" TextTrimming="CharacterEllipsis" HorizontalAlignment="Stretch"/>
+                                <TextBlock Text="{Binding Artists}" VerticalAlignment="Center" Width="200" HorizontalAlignment="Stretch"/>
                                 <TextBlock Text="{Binding Duration}" VerticalAlignment="Center" Width="100" HorizontalAlignment="Stretch"/>
                                 <Button x:Name="RemoveInListButton" Tag="{Binding MediaFileId}" Background="Transparent" Width="60" FontWeight="ExtraBold" BorderThickness="0" HorizontalAlignment="Center" Click="RemoveInListButton_Click">
                                     <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE74D;" FontSize="15"  Foreground="White"/>
                                 </Button>
+                                <Button x:Name="AddToQueueFromHomeBtn" Background="Transparent" Width="60" FontWeight="ExtraBold" BorderThickness="0" HorizontalAlignment="Center" MouseEnter="AddToQueueFromHomeBtn_MouseEnter" MouseLeave="AddToQueueFromHomeBtn_MouseLeave">
+                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE109;" FontSize="15"  Foreground="White"/>
+                                </Button>
+                                <Popup x:Name="OptionsPopup" PlacementTarget="{Binding ElementName=AddToQueueFromHomeBtn}" Placement="Bottom" StaysOpen="False">
+                                    <Border Background="Gray" CornerRadius="5" Padding="10">
+                                        <StackPanel>
+                                            <Button x:Name="AddQueueButton" Content="Add to Queue" Width="120" Margin="5" Background="Transparent" BorderThickness="0" Foreground="White" Click="AddQueueButton_Click"/>
+                                            <Button x:Name="PlaylistButton" Content="Add to Playlist" Width="120" Margin="5" Background="Transparent" BorderThickness="0" Foreground="White"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Popup>
                             </StackPanel>
                         </DataTemplate>
                     </ListView.ItemTemplate>
@@ -59,15 +72,107 @@
             </StackPanel>
         </Grid>
 
+        <!-- Popup to show create playlist -->
+        <Grid x:Name="PlaylistCreationGrid" Visibility="Collapsed" Width="368" Background="#363434" Height="99" Margin="699,-371,-106,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Rectangle HorizontalAlignment="Center" Height="102" Grid.RowSpan="4" Stroke="Black" VerticalAlignment="Top" Width="368" Fill="#1f1c1c" />
+            <TextBox x:Name="PlaylistNameTextBox" HorizontalAlignment="Center" Height="36" Grid.Row="1" TextWrapping="Wrap" Text="Untitled playlist" VerticalAlignment="Center" Width="332" VerticalContentAlignment="Center" Foreground="Black" FontSize="20" FontWeight="Bold"/>
 
-        <!--thanh điều hướng left OpenFileButton, OpenPlayQueueButton-->
+            <Button x:Name="CreatePlaylistButton" Content="Create Playlist" HorizontalAlignment="Center" Height="26" Margin="0,10,0,0" Grid.RowSpan="2" Grid.Row="2" VerticalAlignment="Top" Width="137" Background="#FFD6511E" Foreground="White" FontWeight="Bold" Click="CreatePlaylistButton_Click"/>
+
+            <!-- ListView for playlists -->
+            <!--
+            <ListView x:Name="PlaylistListView" Grid.Row="3" Height="300" BorderThickness="0" Foreground="White" Background="#363434" Width="350" Margin="10">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Width="300" Height="150" Margin="10">
+                            -->
+            <!-- Rectangle for playlist -->
+            <!--
+                            <Rectangle Fill="#1f1c1c" Stroke="Black" StrokeThickness="1" RadiusX="10" RadiusY="10"/>
+
+                            -->
+            <!-- Image placeholder -->
+            <!--
+                            <Image Source="{Binding ImageSource}" Stretch="UniformToFill" Width="50" Height="50" HorizontalAlignment="Left" Margin="10" VerticalAlignment="Top"/>
+
+                            -->
+            <!-- Playlist name -->
+            <!--
+                            <TextBlock Text="{Binding Name}" Foreground="White" FontSize="20" FontWeight="Bold" Margin="70,10,10,10" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+
+                            -->
+            <!-- More button (shows on hover) -->
+            <!--
+                            <Button x:Name="MoreButton" Content="..." Background="Transparent" Foreground="White" BorderBrush="Transparent" BorderThickness="0" Width="30" Height="30" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="10,10,10,10" Visibility="Collapsed" Click="MoreButton_Click"/>
+
+                            -->
+            <!-- Play button (shows on hover) -->
+            <!--
+                            <Button x:Name="PlayButton" Content="Play" Background="Transparent" Foreground="White" BorderBrush="Transparent" BorderThickness="0" Width="50" Height="30" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="10,50,60,10" Visibility="Collapsed" Click="PlayButton_Click"/>
+
+                            -->
+            <!-- Delete button (shows on hover) -->
+            <!--
+                            <Button x:Name="DeleteButton" Content="Delete" Background="Transparent" Foreground="White" BorderBrush="Transparent" BorderThickness="0" Width="50" Height="30" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="10,90,60,10" Visibility="Collapsed" Click="DeleteButton_Click"/>
+
+                            -->
+            <!-- Hover effect to show buttons -->
+            <!--
+                            <Grid.Triggers>
+                                <EventTrigger RoutedEvent="MouseEnter">
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="MoreButton" Storyboard.TargetProperty="Visibility">
+                                                <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="Visible"/>
+                                            </ObjectAnimationUsingKeyFrames>
+                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="PlayButton" Storyboard.TargetProperty="Visibility">
+                                                <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="Visible"/>
+                                            </ObjectAnimationUsingKeyFrames>
+                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="DeleteButton" Storyboard.TargetProperty="Visibility">
+                                                <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="Visible"/>
+                                            </ObjectAnimationUsingKeyFrames>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                                <EventTrigger RoutedEvent="MouseLeave">
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="MoreButton" Storyboard.TargetProperty="Visibility">
+                                                <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="Collapsed"/>
+                                            </ObjectAnimationUsingKeyFrames>
+                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="PlayButton" Storyboard.TargetProperty="Visibility">
+                                                <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="Collapsed"/>
+                                            </ObjectAnimationUsingKeyFrames>
+                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="DeleteButton" Storyboard.TargetProperty="Visibility">
+                                                <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="Collapsed"/>
+                                            </ObjectAnimationUsingKeyFrames>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </Grid.Triggers>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>-->
+        </Grid>
+
+        <!-- Navigation bar -->
         <Grid x:Name="LeftGrid" HorizontalAlignment="Left" Height="451" VerticalAlignment="Top" Width="158" Background="#1f1c1c">
             <Button x:Name="HomeButton" Content="Home" Background="#FFD6511E" Foreground="White" FontWeight="Bold" Margin="23,54,26,338" Click="HomeButton_Click"/>
-            <Button x:Name="PlayQueueButton" Content="Play Queue" Background="#FFD6511E" Foreground="White" FontWeight="Bold" Margin="23,161,26,231" Click="PlayQueueButton_Click"/>
+            <Button x:Name="PlayQueueButton" Content="Queue" Background="#FFD6511E" Foreground="White" FontWeight="Bold" Margin="23,161,26,231" Click="PlayQueueButton_Click"/>
             <Button x:Name="PlaylistButton" Content="Playlists" Background="#FFD6511E" Foreground="White" FontWeight="Bold" Margin="23,267,26,127" Click="PlaylistButton_Click"/>
         </Grid>
 
-        <!-- thanh điều hướng các bài nhạc bottom-->
+        <!-- Bottom control bar -->
         <Grid x:Name="BottomGrid" Background="#242323" Grid.ZIndex="1" Height="139" VerticalAlignment="Top" Margin="0,451,0,0" RenderTransformOrigin="0.5,0.471">
             <Grid>
                 <Slider Name="ProgressSlider"
@@ -101,19 +206,19 @@
                     </Grid.RowDefinitions>
 
                     <!--Tiêu đề của bài hát-->
-                    <TextBlock x:Name="TitleCurSong" Text="" HorizontalAlignment="Center" Foreground="White" Margin="0,-2,0,12" Grid.Row="1" Width="215" FontSize="15" />
+                    <TextBlock x:Name="TitleCurSong" Text="Title" HorizontalAlignment="Center" Foreground="White" Margin="0,-2,0,12" Grid.Row="1" Width="215" FontSize="15" />
 
                     <!--Tên ca sĩ-->
-                    <TextBlock x:Name="ArtistCurSong" Text="" HorizontalAlignment="Center" Foreground="White" Margin="0,49,0,-16" Grid.Row="1" Width="214" FontSize="15"/>
+                    <TextBlock x:Name="ArtistCurSong" Text="Artist" HorizontalAlignment="Center" Foreground="White" Margin="0,49,0,-16" Grid.Row="1" Width="214" FontSize="15"/>
                 </Grid>
             </Button>
 
-            <Button x:Name="PrevButton" Margin="505,50,670,43" Background="Transparent" FontWeight="ExtraBold" BorderThickness="0">
+            <Button x:Name="PrevButton" Margin="505,50,670,43" Background="Transparent" FontWeight="ExtraBold" BorderThickness="0" Click="PrevButton_Click">
                 <StackPanel Orientation="Horizontal">
                     <fa:IconBlock FontSize="30" Icon="Backward" Foreground="White" VerticalAlignment="Center" Width="47"/>
                 </StackPanel>
             </Button>
-            <Button x:Name="NextButton" Margin="663,39,511,32" Background="Transparent" FontWeight="ExtraBold" BorderThickness="0">
+            <Button x:Name="NextButton" Margin="663,39,511,32" Background="Transparent" FontWeight="ExtraBold" BorderThickness="0" Click="NextButton_Click">
                 <StackPanel Orientation="Horizontal">
                     <fa:IconBlock FontSize="30" Icon="Forward" Foreground="White" HorizontalAlignment="Left" VerticalAlignment="Center"/>
                 </StackPanel>
