@@ -201,9 +201,9 @@ namespace MediaPlayer.UI
                 ProgressSlider.Value = MediaElementVideo.Position.TotalSeconds;
             }
         }
-        private void MediaElementVideo_MediaEnded(object sender, RoutedEventArgs e)
+        private void MediaPlayer_MediaEnded(object sender, RoutedEventArgs e)
         {
-            PauseButton_Click(sender, e);
+
         }
         private void MediaElementVideo_MediaOpened(object sender, RoutedEventArgs e)
         {
