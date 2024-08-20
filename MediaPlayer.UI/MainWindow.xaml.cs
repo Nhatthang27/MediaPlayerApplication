@@ -196,7 +196,6 @@ namespace MediaPlayer.UI
             _mediaFileService.AddMediaFile(_curMediaFile);
         }
 
-
         private void ProgressSlider_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             // Tạm thời dừng Timer khi người dùng bắt đầu kéo Slider
@@ -618,6 +617,20 @@ namespace MediaPlayer.UI
             _playQueueService.Remove(_curMediaFile);
             RunFile(mediaFile.FilePath);
             _playQueueService.AddPriority(_curMediaFile);
+        }
+
+        //handle when click on a shuffle button
+        private void ShuffleQueueButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_playQueueService.IsEmpty())
+            {
+                _playQueueService.Shuffle();
+                FillMediaFileList(_playQueueService.PlayQueue);
+            }
+            else
+            {
+                MessageBox.Show("There are no next songs in the queue!");
+            }
         }
 
     }
