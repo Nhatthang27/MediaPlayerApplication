@@ -112,6 +112,8 @@ namespace MediaPlayer.UI
             if (_curMediaFile != null)
             {
                 ShowItem(PauseButton, PlayButton);
+                ShowItem(Screen, StPanelMediaFileList);
+                FillMediaFileList(null);
                 //nếu bài hát có totaltime
                 if (MediaElementVideo.NaturalDuration.HasTimeSpan && MediaElementVideo.Position == MediaElementVideo.NaturalDuration.TimeSpan)
                 {
@@ -634,7 +636,8 @@ namespace MediaPlayer.UI
             {
                 MediaElementVideo.Volume = 0;
                 VolumeIconBlock.Icon = FontAwesome.Sharp.IconChar.VolumeMute;
-            } else
+            }
+            else
             {
                 MediaElementVideo.Volume = VolumeProgressBar.Value;
                 VolumeIconBlock.Icon = FontAwesome.Sharp.IconChar.VolumeUp;
@@ -668,6 +671,7 @@ namespace MediaPlayer.UI
             {
                 _playQueueService.Shuffle();
                 FillMediaFileList(_playQueueService.PlayQueue);
+                ShowItem(StPanelMediaFileList, Screen);
             }
             else
             {
