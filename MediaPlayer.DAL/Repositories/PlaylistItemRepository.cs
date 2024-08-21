@@ -1,4 +1,6 @@
-﻿using MediaPlayer.DAL.Entities;
+﻿using MediaPlayer.DAL.Data;
+using MediaPlayer.DAL.Entities;
+using MediaPlayer.DAL.Repositories.IRepository;
 
 namespace MediaPlayer.DAL.Repositories
 {
