@@ -30,7 +30,11 @@ namespace MediaPlayer.BLL.Services
                 }
             });
             if (!isExisted)
+            {
+                mediaFile.LastPlayedAt = DateTime.Now;
                 _mediaFileRepo.Add(mediaFile);
+            }
+
         }
 
         //delete recent a file 
@@ -42,6 +46,11 @@ namespace MediaPlayer.BLL.Services
         public void GetMediaFileById(int id)
         {
             _mediaFileRepo.GetById(id);
+        }
+
+        public MediaFile GetMediaFileByFilePath(string filePath)
+        {
+            return _mediaFileRepo.GetMediaFile(filePath);
         }
     }
 }

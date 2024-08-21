@@ -17,8 +17,8 @@ namespace MediaPlayer.UI
     {
         private MedieFileService _mediaFileService = new MedieFileService();
         private PlayQueueService _playQueueService = new PlayQueueService();
+        private PlayStackService _playStackService = new PlayStackService();
         private PlaylistService _playlistService = new PlaylistService();
-        private int _currentSongIndex = 0;
         private Point _dragStartPoint;
         private MediaFile _curMediaFile = null;
         private int _mode = 1;
@@ -34,7 +34,7 @@ namespace MediaPlayer.UI
         {
             // Khởi tạo timer để cập nhật thời gian phát hiện tại
             timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromMilliseconds(1); // xác định khoảng thgian của mỗi lần tick
+            timer.Interval = TimeSpan.FromMilliseconds(500); // xác định khoảng thgian của mỗi lần tick
             timer.Tick += Timer_Tick;
         }
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -43,6 +43,10 @@ namespace MediaPlayer.UI
             _curMediaFile = _mediaFileService.GetRecentMediaFiles().FirstOrDefault();
             if (_curMediaFile != null)
                 MediaElementVideo.Source = new Uri(_curMediaFile.FilePath, UriKind.RelativeOrAbsolute);
+            if (_curMediaFile != null)
+            {
+                _playQueueService.AddPriority(_curMediaFile);
+            }
             HomeButton_Click(sender, e);
         }
         private void HomeButton_Click(object sender, RoutedEventArgs e)
@@ -51,6 +55,7 @@ namespace MediaPlayer.UI
             MultiAdd.Content = "Open File";
             MultiHeaderTitle.Content = "Recent Files";
             UpdateTitleAndArtist();
+            ShowItem(StPanelMediaFileList, Screen);
             FillMediaFileList(_mediaFileService.GetRecentMediaFiles());
         }
         private void PlaylistButton_Click(object sender, RoutedEventArgs e)
@@ -100,7 +105,6 @@ namespace MediaPlayer.UI
 
         }
 
-
         //chạy tiếp tục cur file
         private void PlayButton_Click(object sender, RoutedEventArgs e)
         {
@@ -108,6 +112,8 @@ namespace MediaPlayer.UI
             if (_curMediaFile != null)
             {
                 ShowItem(PauseButton, PlayButton);
+                ShowItem(Screen, StPanelMediaFileList);
+                FillMediaFileList(null);
                 //nếu bài hát có totaltime
                 if (MediaElementVideo.NaturalDuration.HasTimeSpan && MediaElementVideo.Position == MediaElementVideo.NaturalDuration.TimeSpan)
                 {
@@ -155,25 +161,22 @@ namespace MediaPlayer.UI
             MediaFileList.ItemsSource = mediaListFile;
         }
 
-        //chạy được một bài hát từ đầu
+        //chạy được một bài hát từ đầu // dependence: OpenFile, Next, Previous, PlayInList
         private void RunFile(string filePath)
         {
+
             _curMediaFile = Utils.GetPropertiesFromFilePath(filePath);
 
             //Show pause button
             ShowItem(PauseButton, PlayButton);
 
-            //show screen
-            ShowItem(Screen, StPanelMediaFileList);
-            //cap nhat artist
-            //UpdateTitleAndArtist();
-
             //cập nhật MediaFileList, xoa de hien thi video
             FillMediaFileList(null);
+            //show screen
+            ShowItem(Screen, StPanelMediaFileList);
 
             //cap nhat artist
             UpdateTitleAndArtist();
-
 
             // Nạp video vào MediaElement
             MediaElementVideo.Source = new Uri(filePath, UriKind.RelativeOrAbsolute);
@@ -181,11 +184,10 @@ namespace MediaPlayer.UI
             // Bắt đầu phát video
             MediaElementVideo.Play();
 
-
             //add or update last time open
             _mediaFileService.AddMediaFile(_curMediaFile);
-
         }
+
         private void ProgressSlider_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             // Tạm thời dừng Timer khi người dùng bắt đầu kéo Slider
@@ -256,8 +258,15 @@ namespace MediaPlayer.UI
             openFileDialog.Filter = Utils.COMMON_MEDIAFILE;
             if (openFileDialog.ShowDialog() == true)
             {
+                //remove queue priority
+                _playQueueService.RemoveAt(0);
+
                 string filePath = openFileDialog.FileName;
                 RunFile(filePath);
+                _curMediaFile = _mediaFileService.GetMediaFileByFilePath(filePath);
+
+                //add queue priority
+                _playQueueService.AddPriority(_curMediaFile);
             }
         }
 
@@ -281,7 +290,7 @@ namespace MediaPlayer.UI
         {
             //create a playlist
         }
-        //handle + icon on each media file
+        //handle + icon on each media file 
         private void AddToQueueFromHomeBtn_MouseEnter(object sender, MouseEventArgs e)
         {
             Button button = sender as Button;
@@ -332,6 +341,7 @@ namespace MediaPlayer.UI
                 // Optionally, show a message or update the UI
                 MessageBox.Show($"{mediaFile.FileName} has been added to the queue.");
             }
+            FillMediaFileList(_playQueueService.PlayQueue);
         }
         private void MultiAdd_Click(object sender, RoutedEventArgs e)
         {
@@ -462,27 +472,14 @@ namespace MediaPlayer.UI
         }
 
         //Handle: track the current playing song
-        private void PlayCurrentSong()
-        {
-            if (_playQueueService.PlayQueue != null && _playQueueService.PlayQueue.Count > 0)
-            {
-                var currentSong = _playQueueService.PlayQueue[_currentSongIndex];
-                RunFile(currentSong.FilePath);
-            }
-        }
         private void NextButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_playQueueService.PlayQueue != null)
+            if (_playQueueService.PlayQueue != null && _playQueueService.PlayQueue.Count > 1)
             {
-                //if _playQueueService.PlayQueue.Count equal (_currentSongIndex + 1) 
-                //then remainder = 0 => return to the first song of list
-
-                _currentSongIndex = (_currentSongIndex + 1) % _playQueueService.PlayQueue.Count;
-                //_currentSongIndex++;
-                //then auto increment the index 
-
-                // Wrap around if at the end
-                PlayCurrentSong();
+                _playStackService.PushToStack(_curMediaFile);
+                _curMediaFile = _playQueueService.PlayQueue[1];
+                _playQueueService.RemoveAt(0);
+                RunFile(_curMediaFile.FilePath);
             }
             else
             {
@@ -492,20 +489,11 @@ namespace MediaPlayer.UI
 
         private void PrevButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_playQueueService.PlayQueue != null)
+            if (!_playStackService.IsStackEmpty())
             {
-                if (_currentSongIndex != 0)
-                {
-                    //_currentSongIndex = (_currentSongIndex - 1) % _playQueueService.PlayQueue.Count;
-                    _currentSongIndex--;
-                    // Wrap around if at the end
-                    PlayCurrentSong();
-                }
-                else
-                {
-                    MessageBox.Show("There are no previous songs in the queue!");
-                }
-
+                _curMediaFile = _playStackService.PopFromStack();
+                RunFile(_curMediaFile.FilePath);
+                _playQueueService.AddPriority(_curMediaFile);
             }
             else
             {
@@ -517,17 +505,17 @@ namespace MediaPlayer.UI
         //will call when the playpack end
         private void MediaPlayer_MediaEnded(object sender, RoutedEventArgs e)
         {
-            if (_playQueueService.PlayQueue != null)
+            if (_playQueueService.PlayQueue != null && _playQueueService.PlayQueue.Count > 1)
             {
-                if (_currentSongIndex != 0)
-                {
-                    // Increment the index and wrap around if necessary
-                    _currentSongIndex = (_currentSongIndex + 1) % _playQueueService.PlayQueue.Count;
-
-                    // Get the next song
-                    var nextSong = _playQueueService.PlayQueue[_currentSongIndex];
-                    RunFile(nextSong.FilePath);
-                }
+                _playStackService.PushToStack(_curMediaFile);
+                string filePath = _playQueueService.PlayQueue[1].FilePath;
+                _playQueueService.RemoveAt(0);
+                RunFile(filePath);
+                _curMediaFile = _mediaFileService.GetMediaFileByFilePath(filePath);
+            }
+            else
+            {
+                PauseButton_Click(sender, e);
             }
         }
         private void CreatePlaylistButton_Click(object sender, RoutedEventArgs e)
@@ -580,9 +568,9 @@ namespace MediaPlayer.UI
             var button = sender as Button;
 
             // Lấy đối tượng của phần tử từ thuộc tính Tag
-            var mediaFileId = button?.Tag as int?;
+            var mediaFile = button?.Tag as MediaFile;
 
-            _mediaFileService.RemoveAMediaFile(mediaFileId.Value);
+            _mediaFileService.RemoveAMediaFile(mediaFile.MediaFileId);
             FillMediaFileList(_mediaFileService.GetRecentMediaFiles());
         }
 
@@ -596,26 +584,10 @@ namespace MediaPlayer.UI
             Button button = sender as Button;
             if (button != null)
             {
-                var mediaFile = button.DataContext as MediaFile;
-                if (mediaFile != null)
-                {
-                    if (_playQueueService.PlayQueue != null)
-                    {
-                        _playQueueService.PlayQueue.Remove(mediaFile);
-                        MediaFileList.Items.Refresh();
-                    }
-                }
-                else
-                {
-                    var playlist = button.DataContext as Playlist;
-                    if (playlist != null)
-                    {
-                        _playlistService.Remove(playlist); // Remove the playlist from the repository
-                        MediaFileList.ItemsSource = _playlistService.GetAllPlaylist(); // Update ListView data source
-                        MediaFileList.Items.Refresh(); // Refresh the ListView
-                    }
-                }
-
+                var mediaFile = button?.Tag as MediaFile;
+                _playQueueService.Remove(mediaFile);
+                FillMediaFileList(_playQueueService.PlayQueue);
+                MediaFileList.Items.Refresh();
             }
         }
 
@@ -640,10 +612,91 @@ namespace MediaPlayer.UI
         {
             var button = sender as Button;
 
-            var filePath = button?.Tag as string;
+            var mediaFile = button?.Tag as MediaFile;
 
-            RunFile(filePath);
+            //xoa cai được chọn nếu nó khong phải là cái đầu tiên trong queue
+            if (_mode == 2 && _playQueueService.GetIndexInQueue(mediaFile) != 0)
+            {
+                _playQueueService.Remove(mediaFile);
+            }
+            //chọn thằng đàu trong queue thì không thêm vào stack
+            if (_mode != 2 || _playQueueService.GetIndexInQueue(mediaFile) != 0)
+            {
+                _playStackService.PushToStack(_curMediaFile);
+            }
+            _playQueueService.Remove(_curMediaFile);
+            RunFile(mediaFile.FilePath);
+            _playQueueService.AddPriority(_curMediaFile);
         }
 
+        private void VolumeProgressBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            AdjustVolume(e);
+        }
+
+        private void VolumeProgressBar_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                AdjustVolume(e);
+            }
+        }
+
+        private void AdjustVolume(MouseEventArgs e)
+        {
+            var pos = e.GetPosition(VolumeProgressBar);
+            double volume = (pos.X / VolumeProgressBar.ActualWidth);
+            VolumeProgressBar.Value = volume;
+            MediaElementVideo.Volume = VolumeProgressBar.Value;
+        }
+
+        private void VolumeButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (VolumeIconBlock.Icon == FontAwesome.Sharp.IconChar.VolumeUp)
+            {
+                MediaElementVideo.Volume = 0;
+                VolumeIconBlock.Icon = FontAwesome.Sharp.IconChar.VolumeMute;
+            }
+            else
+            {
+                MediaElementVideo.Volume = VolumeProgressBar.Value;
+                VolumeIconBlock.Icon = FontAwesome.Sharp.IconChar.VolumeUp;
+            }
+
+        }
+
+        private void VolumeButton_MouseMove(object sender, MouseEventArgs e)
+        {
+            VolumeProgressBar.Visibility = Visibility.Visible;
+        }
+
+        private void VolumeButton_MouseLeave(object sender, MouseEventArgs e)
+        {
+            var mousePos = e.GetPosition(VolumeProgressBar);
+            var progressBarRect = new Rect(0, 0, VolumeProgressBar.ActualWidth, VolumeProgressBar.ActualHeight);
+
+            double limit = 10;
+
+            if (!progressBarRect.Contains(mousePos) &&
+                (mousePos.X < -limit || mousePos.X > VolumeProgressBar.ActualWidth + limit ||
+                mousePos.Y < -limit || mousePos.Y > VolumeProgressBar.ActualHeight + limit))
+            {
+                VolumeProgressBar.Visibility = Visibility.Collapsed;
+            }
+        }
+        //handle when click on a shuffle button
+        private void ShuffleQueueButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_playQueueService.IsEmpty())
+            {
+                _playQueueService.Shuffle();
+                FillMediaFileList(_playQueueService.PlayQueue);
+                ShowItem(StPanelMediaFileList, Screen);
+            }
+            else
+            {
+                MessageBox.Show("There are no next songs in the queue!");
+            }
+        }
     }
 }
