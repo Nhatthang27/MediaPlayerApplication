@@ -631,7 +631,8 @@ namespace MediaPlayer.UI
             if (volume > 0)
             {
                 VolumeIconBlock.Icon = FontAwesome.Sharp.IconChar.VolumeUp;
-            } else
+            }
+            else
             {
                 VolumeIconBlock.Icon = FontAwesome.Sharp.IconChar.VolumeMute;
             }

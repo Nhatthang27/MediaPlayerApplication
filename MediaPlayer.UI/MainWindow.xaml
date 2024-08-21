@@ -16,12 +16,12 @@
             </Grid.RowDefinitions>
 
             <Grid x:Name="Screen" Grid.ZIndex="1" HorizontalAlignment="Center" Height="379" VerticalAlignment="Top" Width="1080" RenderTransformOrigin="0.482,0.522" Margin="0,70,0,0" Grid.RowSpan="2">
-                    <MediaElement Name="MediaElementVideo"
+                <MediaElement Name="MediaElementVideo"
                        LoadedBehavior="Manual"
                        UnloadedBehavior="Stop"
                        MediaEnded="MediaPlayer_MediaEnded"
                        Stretch="Uniform" MediaOpened="MediaElementVideo_MediaOpened"
-                          />    
+                          />
             </Grid>
 
             <StackPanel x:Name="StPanelMediaFileList" Grid.ZIndex="2" Background="#363434" Grid.RowSpan="2">
