@@ -26,6 +26,8 @@ namespace MediaPlayer.UI
 
         private DispatcherTimer timer; // thực thi các hoạt động trong 1 khoảng thời gian định sẵn
         private Visibility _buttonVisibility = Visibility.Visible;
+
+        private double _volumeValue;
         public MainWindow()
         {
             InitializeComponent();
@@ -626,6 +628,13 @@ namespace MediaPlayer.UI
         {
             var pos = e.GetPosition(VolumeProgressBar);
             double volume = (pos.X / VolumeProgressBar.ActualWidth);
+            if (volume > 0)
+            {
+                VolumeIconBlock.Icon = FontAwesome.Sharp.IconChar.VolumeUp;
+            } else
+            {
+                VolumeIconBlock.Icon = FontAwesome.Sharp.IconChar.VolumeMute;
+            }
             VolumeProgressBar.Value = volume;
             MediaElementVideo.Volume = VolumeProgressBar.Value;
         }
@@ -634,11 +643,14 @@ namespace MediaPlayer.UI
         {
             if (VolumeIconBlock.Icon == FontAwesome.Sharp.IconChar.VolumeUp)
             {
+                _volumeValue = VolumeProgressBar.Value;
+                VolumeProgressBar.Value = 0;
                 MediaElementVideo.Volume = 0;
                 VolumeIconBlock.Icon = FontAwesome.Sharp.IconChar.VolumeMute;
             }
             else
             {
+                VolumeProgressBar.Value = _volumeValue;
                 MediaElementVideo.Volume = VolumeProgressBar.Value;
                 VolumeIconBlock.Icon = FontAwesome.Sharp.IconChar.VolumeUp;
             }
