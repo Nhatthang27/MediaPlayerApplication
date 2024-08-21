@@ -159,6 +159,7 @@ namespace MediaPlayer.UI
         {
             MediaFileList.ItemsSource = null;
             MediaFileList.ItemsSource = mediaListFile;
+
         }
 
         //chạy được một bài hát từ đầu // dependence: OpenFile, Next, Previous, PlayInList
@@ -271,7 +272,7 @@ namespace MediaPlayer.UI
         }
 
         //add to queue
-        private void AddFile()
+        private void AddFile(object sender, RoutedEventArgs e)
         {
             Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
             openFileDialog.Filter = Utils.COMMON_MEDIAFILE;
@@ -283,7 +284,7 @@ namespace MediaPlayer.UI
                 _playQueueService.Add(newFile);
 
             }
-            FillMediaFileList(_playQueueService.PlayQueue);
+            PlayQueueButton_Click(sender, e);
         }
 
         private void CreateAPlaylist()
@@ -303,9 +304,7 @@ namespace MediaPlayer.UI
                     var popup = stackPanel.Children.OfType<Popup>().FirstOrDefault();
                     if (popup != null)
                     {
-
                         popup.IsOpen = true;
-
                     }
                 }
             }
@@ -341,7 +340,8 @@ namespace MediaPlayer.UI
                 // Optionally, show a message or update the UI
                 MessageBox.Show($"{mediaFile.FileName} has been added to the queue.");
             }
-            FillMediaFileList(_playQueueService.PlayQueue);
+            //FillMediaFileList(_playQueueService.PlayQueue); -> doi sang bam nut Play Queue
+            PlayQueueButton_Click(sender, e);
         }
         private void MultiAdd_Click(object sender, RoutedEventArgs e)
         {
@@ -351,7 +351,7 @@ namespace MediaPlayer.UI
             }
             else if (MultiAdd.Content.Equals("Add File"))
             {
-                AddFile();
+                AddFile(sender, e);
             }
             else if (MultiAdd.Content.Equals("Create Playlist"))
             {

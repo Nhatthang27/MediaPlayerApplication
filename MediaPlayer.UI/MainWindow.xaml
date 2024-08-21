@@ -42,6 +42,7 @@
                           DragOver="MediaFileList_DragOver"
                           Drop="MediaFileList_Drop"
                           AllowDrop="True">
+
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" Margin="10" >
