@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace MediaPlayer.DAL.Migrations
 {
-    [DbContext(typeof(MediaPlayerDBContext))]
+    [DbContext(typeof(Data.MediaPlayerDBContext))]
     [Migration("20240817115607_V0")]
     partial class V0
     {

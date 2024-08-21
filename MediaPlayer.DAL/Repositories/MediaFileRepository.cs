@@ -16,7 +16,9 @@ namespace MediaPlayer.DAL.Repositories
 
         public void Delete(MediaFile entity)
         {
-            throw new NotImplementedException();
+            _context = new MediaPlayerDBContext();
+            _context.MediaFiles.Remove(entity);
+            _context.SaveChanges();
         }
 
         public IEnumerable<MediaFile> GetAll()

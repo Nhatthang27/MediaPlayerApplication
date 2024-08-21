@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "MediaPlayer.UI": {
+      "commandName": "Project"
+    },
+    "Profile 1": {
+      "commandName": "Project"
+    }
+  }
+}

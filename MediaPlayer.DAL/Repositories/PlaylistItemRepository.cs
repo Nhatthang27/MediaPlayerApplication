@@ -25,6 +25,19 @@ namespace MediaPlayer.DAL.Repositories
             return _context.PlaylistItems.ToList();
         }
 
+        public IEnumerable<MediaFile> GetMediaFilesByPlaylistID(int playlistId)
+        {
+            using (var context = new MediaPlayerDBContext())
+            {
+                // Retrieve MediaFiles associated with the given PlaylistId
+                return context.PlaylistItems
+                              .Where(pi => pi.PlaylistId == playlistId) // Filter by PlaylistId
+                              .OrderBy(pi => pi.Order) // Sort by Order
+                              .Select(pi => pi.MediaFile) // Select MediaFile
+                              .ToList(); // Convert to list
+            }
+        }
+
         public PlaylistItem GetById(int id)
         {
             throw new NotImplementedException();

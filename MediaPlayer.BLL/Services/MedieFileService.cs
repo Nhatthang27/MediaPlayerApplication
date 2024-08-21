@@ -18,5 +18,11 @@ namespace MediaPlayer.BLL.Services
         {
             _mediaFileRepo.Add(mediaFile);
         }
+
+        public void Remove(MediaFile mediaFile)
+        {
+            _mediaFileRepo.Delete(mediaFile);
+        }
+
     }
 }

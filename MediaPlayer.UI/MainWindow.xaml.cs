@@ -3,8 +3,11 @@ using MediaPlayer.BLL.Services;
 using MediaPlayer.DAL.Entities;
 using MediaPlayer.DAL.Repositories;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Windows;
+//using System.Windows.Forms;
 using System.Windows.Controls;
+using System.Windows.Input;
 namespace MediaPlayer.UI
 {
     /// <summary>
@@ -15,38 +18,58 @@ namespace MediaPlayer.UI
         private MedieFileService _mediaFileService = new MedieFileService();
         private PlayQueueService _playQueueService = new PlayQueueService();
         private PlaylistService _playlistService = new PlaylistService();
+        private PlaylistItemService _playlistlistItemService = new PlaylistItemService();
 
         private MediaFile _curMediaFile = null;
         public MainWindow()
         {
             InitializeComponent();
         }
+
+        private void ShowPanel(UIElement panelToShow)
+        {
+            // Hide all panels first
+            StPanelMediaFileList.Visibility = Visibility.Hidden;
+            StPanelPlaylistList.Visibility = Visibility.Hidden;
+
+            // Show the selected panel
+            panelToShow.Visibility = Visibility.Visible;
+        }
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            ShowPanel(StPanelMediaFileList);
             //FillMediaFileList(_mediaFileSer0.vice.GetAllMediaFiles().AsEnumerable().Reverse());
             HomeButton_Click(sender, e);
         }
         private void HomeButton_Click(object sender, RoutedEventArgs e)
         {
+            ShowPanel(StPanelMediaFileList);
             MultiAdd.Content = "Open File";
             MultiHeaderTitle.Content = "Recent Files";
+            PlaylistCreationGrid.Visibility = Visibility.Collapsed;
             FillMediaFileList(_mediaFileService.GetAllMediaFiles().AsEnumerable().Reverse());
+
         }
         private void PlaylistButton_Click(object sender, RoutedEventArgs e)
         {
+            ShowPanel(StPanelPlaylistList);
             MultiAdd.Content = "Create Playlist";
             MultiHeaderTitle.Content = "Playlist";
 
+
             var playlists = _playlistService.GetAllPlaylist().ToList();
 
-            MediaFileList.ItemsSource = playlists;
 
-            ShowItem(StPanelMediaFileList, Screen);
+            PlaylistList.ItemsSource = playlists;
+
+            ShowItem(StPanelPlaylistList, Screen);
         }
         private void PlayQueueButton_Click(object sender, RoutedEventArgs e)
         {
+            ShowPanel(StPanelMediaFileList);
             MultiAdd.Content = "Add File";
             MultiHeaderTitle.Content = "Play Queue";
+            PlaylistCreationGrid.Visibility = Visibility.Collapsed;
             FillMediaFileList(_playQueueService.PlayQueue);
             ShowItem(StPanelMediaFileList, Screen);
         }
@@ -76,7 +99,7 @@ namespace MediaPlayer.UI
         private void PauseButton_Click(object sender, RoutedEventArgs e)
         {
             SwapZIndex(PauseButton, PlayButton);
-            mediaElementVideo.Pause();
+            MediaElementVideo.Pause();
         }
 
         private void PlayButton_Click(object sender, RoutedEventArgs e)
@@ -84,7 +107,7 @@ namespace MediaPlayer.UI
             if (_curMediaFile != null)
             {
                 SwapZIndex(PlayButton, PauseButton);
-                mediaElementVideo.Play();
+                MediaElementVideo.Play();
             }
 
         }
@@ -94,7 +117,7 @@ namespace MediaPlayer.UI
             SwapZIndex(Screen, StPanelMediaFileList);
             if (Panel.GetZIndex(Screen) > Panel.GetZIndex(StPanelMediaFileList))
             {
-                FillMediaFileList(null);
+                FillMediaFileList<MediaFile>(null);
             }
             else
             {
@@ -103,7 +126,7 @@ namespace MediaPlayer.UI
         }
 
         //hàm fill MediaFileList - isQueue = true: fill queue, false: fill recent files
-        private void FillMediaFileList(IEnumerable<MediaFile> mediaListFile)
+        private void FillMediaFileList<T>(IEnumerable<T> mediaListFile)
         {
             MediaFileList.ItemsSource = null;
             MediaFileList.ItemsSource = mediaListFile;
@@ -119,9 +142,9 @@ namespace MediaPlayer.UI
 
             _curMediaFile = Utils.GetPropertiesFromFilePath(filePath);
             // Nạp video vào MediaElement
-            mediaElementVideo.Source = new Uri(filePath, UriKind.RelativeOrAbsolute);
+            MediaElementVideo.Source = new Uri(filePath, UriKind.RelativeOrAbsolute);
             // Bắt đầu phát video
-            mediaElementVideo.Play();
+            MediaElementVideo.Play();
         }
 
         private void UpdateTitleAndArtist(MediaFile mediaFile)
@@ -151,12 +174,9 @@ namespace MediaPlayer.UI
                 _mediaFileService.AddMediaFile(newFile);
 
                 //cập nhật MediaFileList, xoa de hien thi video
-                FillMediaFileList(null);
+                FillMediaFileList<MediaFile>(null);
             }
-            else
-            {
-                MessageBox.Show("File format doesnot support!", "Open Failed", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+           
         }
 
         private void AddFile()
@@ -250,6 +270,11 @@ namespace MediaPlayer.UI
 
         private void RemoveInListButton_Click(object sender, RoutedEventArgs e)
         {
+
+            MessageBoxResult answer = MessageBox.Show("Do you really want to delete?", "Confirm?", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (answer == MessageBoxResult.No)
+                return;
+
             Button button = sender as Button;
             if (button != null)
             {
@@ -262,17 +287,67 @@ namespace MediaPlayer.UI
                         MediaFileList.Items.Refresh();
                     }
                 }
-
-                var item = button.DataContext as Playlist;
-                if (item != null)
+                else
                 {
-                    _playlistService.Remove(item); // Remove the playlist from the repository
-                    MediaFileList.ItemsSource = _playlistService.GetAllPlaylist(); // Update ListView data source
-                    MediaFileList.Items.Refresh(); // Refresh the ListView
+                    var playlist = button.DataContext as Playlist;
+                    if (playlist != null)
+                    {
+                        _playlistService.Remove(playlist); // Remove the playlist from the repository
+                        PlaylistList.ItemsSource = _playlistService.GetAllPlaylist(); // Update ListView data source
+                        PlaylistList.Items.Refresh(); // Refresh the ListView
+                    }
                 }
 
             }
-        }   
+        }
+
+
+        private void ListViewItem_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            // Cast sender to ListViewItem
+            ListViewItem listViewItem = sender as ListViewItem;
+
+            // Ensure listViewItem is not null
+            if (listViewItem != null)
+            {
+                // Get the DataContext from the ListViewItem
+                var dataContext = listViewItem.DataContext;
+
+                // Check if the DataContext is of type Playlist
+                if (dataContext is Playlist playlist)
+                {
+
+
+                    // Update the MultiHeaderTitle with the playlist title
+                    MultiHeaderTitle.Content = playlist.Title;
+
+
+                    int playlistId = playlist.PlaylistId;
+
+
+                    ShowPanel(StPanelMediaFileList);
+
+
+                    var playlists = _playlistlistItemService.GetMediaFilesByPlaylistID(playlistId).ToList();
+
+
+
+                    MediaFileList.ItemsSource = playlists;
+
+                    ShowItem(StPanelMediaFileList, Screen);
+
+
+                }
+                else
+                {
+                    // Handle cases where the DataContext is not a Playlist
+                    MultiHeaderTitle.Content = "Unknown Playlist";
+                }
+            }
+        }
+
+
+
 
     }
 }
