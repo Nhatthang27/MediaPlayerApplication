@@ -422,7 +422,7 @@ namespace MediaPlayer.UI
                 if (targetItem == null) return;
                 MediaFile target = listView.ItemContainerGenerator.ItemFromContainer(targetItem) as MediaFile;
              //handle k được move song đang play
-				if (droppedData == _playQueueService.PlayQueue[_currentSongIndex])
+				if (droppedData == _playQueueService.PlayQueue[0])
 				{
                     MessageBox.Show("The song is currently playing!", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
 					return;
@@ -440,15 +440,17 @@ namespace MediaPlayer.UI
 							_playQueueService.PlayQueue.RemoveAt(removedIdx);
 							// Insert it at the new position
 							_playQueueService.PlayQueue.Insert(targetIdx, droppedData);
-							if (_currentSongIndex > removedIdx && _currentSongIndex <= targetIdx)
+							// Handle the case where the droppedData has index 1
+							if (removedIdx == 1)
 							{
-								// Adjust _currentSongIndex if the current song is after the dragged item
-								_currentSongIndex--;
-							}
-							else if (_currentSongIndex < removedIdx && _currentSongIndex >= targetIdx)
-							{
-								// Adjust _currentSongIndex if the current song is before the dragged item
-								_currentSongIndex++;
+								// Move the next song to index 1
+								if (removedIdx < _playQueueService.PlayQueue.Count)
+								{
+									// Move the next song to index 1
+									MediaFile nextSong = _playQueueService.PlayQueue[1];
+									_playQueueService.PlayQueue.RemoveAt(1);
+									_playQueueService.PlayQueue.Insert(1, nextSong);
+								}
 							}
 							MediaFileList.Items.Refresh();
 							//_playQueueService.PlayQueue.RemoveAt(removedIdx);
@@ -491,9 +493,24 @@ namespace MediaPlayer.UI
         {
             if (!_playStackService.IsStackEmpty())
             {
+
+                //if (_currentSongIndex != 0)
+                //{
+                //    //_currentSongIndex = (_currentSongIndex - 1) % _playQueueService.PlayQueue.Count;
+                //    _currentSongIndex--;
+                //    // Wrap around if at the end
+                //    PlayCurrentSong();
+                //}
+                //else
+                //{
+                //    MessageBox.Show("There are no previous songs in the queue!");
+                //}
+
+
                 _curMediaFile = _playStackService.PopFromStack();
                 RunFile(_curMediaFile.FilePath);
                 _playQueueService.AddPriority(_curMediaFile);
+
             }
             else
             {
