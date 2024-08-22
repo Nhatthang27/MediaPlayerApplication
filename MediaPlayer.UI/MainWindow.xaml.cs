@@ -19,10 +19,16 @@ namespace MediaPlayer.UI
         private PlayQueueService _playQueueService = new PlayQueueService();
         private PlayStackService _playStackService = new PlayStackService();
         private PlaylistService _playlistService = new PlaylistService();
+        private PlaylistItemService _playlistlistItemService = new PlaylistItemService();
         private Point _dragStartPoint;
         private MediaFile _curMediaFile = null;
         private int _mode = 1;
-        //mode 1 == home, mode 2 == play queue, mode 3 == playlist
+        private int _songIdAddToPlaylist;
+        private Playlist _playlistVisit;
+        //mode 1 == home, mode 2 == play queue, mode 3 == playlist, mode 4 == playlistItems
+
+        private int _status = 1;//status for doubleclick in playlist
+        //status 1 == view playlist, status 2 == add song to playlist, status 3 == create playlist, status 4 == rename playlist
 
         private DispatcherTimer timer; // thực thi các hoạt động trong 1 khoảng thời gian định sẵn
         private Visibility _buttonVisibility = Visibility.Visible;
@@ -37,9 +43,20 @@ namespace MediaPlayer.UI
             timer.Interval = TimeSpan.FromMilliseconds(500); // xác định khoảng thgian của mỗi lần tick
             timer.Tick += Timer_Tick;
         }
+        private void ShowPanel(UIElement panelToShow)
+        {
+            // Hide all panels first
+            StPanelMediaFileList.Visibility = Visibility.Hidden;
+            StPanelPlaylistList.Visibility = Visibility.Hidden;
+
+            // Show the selected panel
+            panelToShow.Visibility = Visibility.Visible;
+        }
+
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             SetUpTimerMediaFile();
+            ShowPanel(StPanelMediaFileList);
             _curMediaFile = _mediaFileService.GetRecentMediaFiles().FirstOrDefault();
             if (_curMediaFile != null)
                 MediaElementVideo.Source = new Uri(_curMediaFile.FilePath, UriKind.RelativeOrAbsolute);
@@ -52,6 +69,8 @@ namespace MediaPlayer.UI
         private void HomeButton_Click(object sender, RoutedEventArgs e)
         {
             _mode = 1;
+            ShowPanel(StPanelMediaFileList);
+            PlaylistCreationGrid.Visibility = Visibility.Hidden;
             MultiAdd.Content = "Open File";
             MultiHeaderTitle.Content = "Recent Files";
             UpdateTitleAndArtist();
@@ -61,19 +80,23 @@ namespace MediaPlayer.UI
         private void PlaylistButton_Click(object sender, RoutedEventArgs e)
         {
             _mode = 3;
+            _status = 1;
+            ShowPanel(StPanelPlaylistList);
             MultiAdd.Content = "Create Playlist";
             MultiHeaderTitle.Content = "Playlist";
 
             var playlists = _playlistService.GetAllPlaylist().ToList();
 
 
-            MediaFileList.ItemsSource = playlists;
+            PlaylistList.ItemsSource = playlists;
 
-            ShowItem(StPanelMediaFileList, Screen);
+            ShowItem(StPanelPlaylistList, Screen);
         }
         private void PlayQueueButton_Click(object sender, RoutedEventArgs e)
         {
             _mode = 2;
+            ShowPanel(StPanelMediaFileList);
+            PlaylistCreationGrid.Visibility = Visibility.Hidden;
             MultiAdd.Content = "Add File";
             MultiHeaderTitle.Content = "Play Queue";
             FillMediaFileList(_playQueueService.PlayQueue);
@@ -286,10 +309,6 @@ namespace MediaPlayer.UI
             FillMediaFileList(_playQueueService.PlayQueue);
         }
 
-        private void CreateAPlaylist()
-        {
-            //create a playlist
-        }
         //handle + icon on each media file 
         private void AddToQueueFromHomeBtn_MouseEnter(object sender, MouseEventArgs e)
         {
@@ -355,6 +374,22 @@ namespace MediaPlayer.UI
             }
             else if (MultiAdd.Content.Equals("Create Playlist"))
             {
+                CreatePlaylistButton.Content = "Create Playlist";
+                _status = 3;
+                if (PlaylistCreationGrid.Visibility == Visibility.Visible)
+                {
+                    PlaylistCreationGrid.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    PlaylistCreationGrid.Visibility = Visibility.Visible;
+                }
+            }
+            else if (MultiAdd.Content.Equals("Rename"))
+            {
+                CreatePlaylistButton.Content = "Rename";
+                PlaylistNameTextBox.Text = _playlistVisit.Title;
+                _status = 4;
                 if (PlaylistCreationGrid.Visibility == Visibility.Visible)
                 {
                     PlaylistCreationGrid.Visibility = Visibility.Collapsed;
@@ -507,13 +542,23 @@ namespace MediaPlayer.UI
                 MessageBox.Show("Please enter a valid playlist name.", "Invalid Input", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-            DateTime createdAt = DateTime.Now;
+            
+            if(_status == 3) //click để create playlist
+            {
+                DateTime createdAt = DateTime.Now;
 
-            CreateAPlaylist(playlistName, createdAt);
+                CreateAPlaylist(playlistName, createdAt);
+
+                PlaylistCreationGrid.Visibility = Visibility.Collapsed;
+
+                PlaylistButton_Click(sender, e);
+            } else // click để rename playlist 
+            {
+                _playlistService.UpdateName(playlistName, _playlistVisit.PlaylistId);
+                MultiHeaderTitle.Content = playlistName;
+            }
 
             PlaylistCreationGrid.Visibility = Visibility.Collapsed;
-
-            PlaylistButton_Click(sender, e);
 
         }
         private void CreateAPlaylist(string name, DateTime createdAt)
@@ -544,11 +589,14 @@ namespace MediaPlayer.UI
 
         private void Recent_RemoveInListButton_Click(object sender, RoutedEventArgs e)
         {
+            MessageBoxResult answer = MessageBox.Show("Do you really want to delete?", "Confirm?", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (answer == MessageBoxResult.No)
+                return;
             // Ép kiểu sender thành Button
             var button = sender as Button;
 
             // Lấy đối tượng của phần tử từ thuộc tính Tag
-            var mediaFile = button?.Tag as MediaFile;
+            var mediaFile = button?.DataContext as MediaFile;
 
             _mediaFileService.RemoveAMediaFile(mediaFile.MediaFileId);
             FillMediaFileList(_mediaFileService.GetRecentMediaFiles());
@@ -564,10 +612,54 @@ namespace MediaPlayer.UI
             Button button = sender as Button;
             if (button != null)
             {
-                var mediaFile = button?.Tag as MediaFile;
+                var mediaFile = button?.DataContext as MediaFile;
                 _playQueueService.Remove(mediaFile);
                 FillMediaFileList(_playQueueService.PlayQueue);
                 MediaFileList.Items.Refresh();
+            }
+        }
+
+        private void Playlist_RemoveInListButton_Click(object sender, RoutedEventArgs e)
+        {
+
+            MessageBoxResult answer = MessageBox.Show("Do you really want to delete?", "Confirm?", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (answer == MessageBoxResult.No)
+                return;
+
+            Button button = sender as Button;
+            if (button != null)
+            {
+                var playlist = button.DataContext as Playlist;
+                if (playlist != null)
+                {
+                    _playlistService.Remove(playlist); // Remove the playlist from the repository
+                    _playlistlistItemService.DeletePlaylist(playlist.PlaylistId);
+                    PlaylistList.ItemsSource = _playlistService.GetAllPlaylist(); // Update ListView data source
+                    PlaylistList.Items.Refresh(); // Refresh the ListView
+                }
+            }
+        }
+
+        private void PlaylistItems_RemoveInListButton_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBoxResult answer = MessageBox.Show("Do you really want to delete?", "Confirm?", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (answer == MessageBoxResult.No)
+                return;
+            
+            Button button = sender as Button;
+            if (button != null)
+            {
+                var mediaFile = button.DataContext as MediaFile;
+                if(mediaFile != null)
+                {
+                    _playlistlistItemService.Delete(mediaFile.MediaFileId, _playlistVisit.PlaylistId);
+                    var playlists = _playlistlistItemService.GetMediaFilesByPlaylistID(_playlistVisit.PlaylistId).ToList();
+
+                    MediaFileList.ItemsSource = playlists;
+
+                    ShowItem(StPanelMediaFileList, Screen);
+                    PlaylistList.Items.Refresh();
+                }
             }
         }
 
@@ -581,10 +673,12 @@ namespace MediaPlayer.UI
             {
                 Queue_RemoveInListButton_Click(sender, e);
             }
-            else
+            else if (_mode == 3)
             {
-                //playlist
-                //Queue_RemoveInListButton_Click(sender, e);
+                Playlist_RemoveInListButton_Click(sender, e);
+            } else
+            {
+                PlaylistItems_RemoveInListButton_Click(sender, e);
             }
         }
 
@@ -677,6 +771,127 @@ namespace MediaPlayer.UI
             {
                 MessageBox.Show("There are no next songs in the queue!");
             }
+        }
+
+        private void ListViewItem_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            // Cast sender to ListViewItem
+            ListViewItem listViewItem = sender as ListViewItem;
+
+            // Ensure listViewItem is not null
+            if (listViewItem != null)
+            {
+                // Get the DataContext from the ListViewItem
+                var dataContext = listViewItem.DataContext;
+
+                // Check if the DataContext is of type Playlist
+                if (dataContext is Playlist playlist)
+                {
+                    if(_status ==1) //xem trong playlsit
+                    {
+                        _playlistVisit = playlist;
+                        // Update the MultiHeaderTitle with the playlist title
+                        MultiHeaderTitle.Content = _playlistVisit.Title;
+
+
+
+
+                        ShowPanel(StPanelMediaFileList);
+
+
+                        var playlists = _playlistlistItemService.GetMediaFilesByPlaylistID(_playlistVisit.PlaylistId).ToList();
+
+
+
+                        MediaFileList.ItemsSource = playlists;
+                        _mode = 4;
+                        MultiAdd.Content = "Rename";
+
+                        ShowItem(StPanelMediaFileList, Screen);
+
+
+                    }
+
+                    if(_status ==2) // add song vào playlist
+                    {
+                        bool checkDuplicate = false;
+                        List<MediaFile> songInPlayList = _playlistlistItemService.GetMediaFilesByPlaylistID(playlist.PlaylistId).ToList();
+                        foreach (var song in songInPlayList) 
+                            if(song.MediaFileId == _songIdAddToPlaylist)
+                            {
+                                checkDuplicate = true;
+                                break;
+                            }
+                        if (!checkDuplicate)
+                        {
+                            _playlistlistItemService.Add(playlist.PlaylistId, _songIdAddToPlaylist);
+
+                            if (_mode == 1) // back về home
+                            {
+                                ShowPanel(StPanelMediaFileList);
+                                PlaylistCreationGrid.Visibility = Visibility.Hidden;
+                                MultiAdd.Visibility = Visibility.Visible;
+                                MultiAdd.Content = "Open File";
+                                MultiHeaderTitle.Content = "Recent Files";
+                                UpdateTitleAndArtist();
+                                ShowItem(StPanelMediaFileList, Screen);
+                                FillMediaFileList(_mediaFileService.GetRecentMediaFiles());
+                            }
+                            else if (_mode == 2) //back về queue
+                            {
+                                ShowPanel(StPanelMediaFileList);
+                                PlaylistCreationGrid.Visibility = Visibility.Hidden;
+                                MultiAdd.Visibility = Visibility.Visible;
+                                MultiAdd.Content = "Add File";
+                                MultiHeaderTitle.Content = "Play Queue";
+                                FillMediaFileList(_playQueueService.PlayQueue);
+                                ShowItem(StPanelMediaFileList, Screen);
+                            }
+                            MessageBox.Show("The song has been successfully added to the playlist.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                        }
+                        else
+                        {
+                            MessageBox.Show("The song is already in the playlist.", "Duplicate Song", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        }
+                    }
+
+                }
+                else
+                {
+                    // Handle cases where the DataContext is not a Playlist
+                    MultiHeaderTitle.Content = "Unknown Playlist";
+                }
+            }
+        }
+
+        private void PlaylistButton_Click_1(object sender, RoutedEventArgs e)
+        {
+
+            // Cast the sender to a Button
+            Button button = sender as Button;
+
+            if (button != null)
+            {
+                // Retrieve the song object from the Button's Tag property
+                var song = button.Tag as MediaFile; 
+
+                if (song != null)
+                {
+                    ShowPanel(StPanelPlaylistList);
+                    MultiAdd.Visibility = Visibility.Collapsed;
+                    MultiHeaderTitle.Content = "Add Song to Playlist";
+
+                    var playlists = _playlistService.GetAllPlaylist().ToList();
+
+
+                    PlaylistList.ItemsSource = playlists;
+
+                    ShowItem(StPanelPlaylistList, Screen);
+                    _songIdAddToPlaylist = song.MediaFileId;
+                    _status = 2;
+                }
+            }
+
         }
     }
 }

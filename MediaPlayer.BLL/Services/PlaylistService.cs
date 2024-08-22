@@ -26,5 +26,10 @@ namespace MediaPlayer.BLL.Services
         {
             _playlistRepo.Delete(playlist);
         }
+
+        public void UpdateName(string name, int playlistId)
+        {
+            _playlistRepo.UpdateName(name, playlistId);
+        }
     }
 }
