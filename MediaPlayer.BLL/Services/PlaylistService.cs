@@ -1,10 +1,5 @@
 ﻿using MediaPlayer.DAL.Entities;
 using MediaPlayer.DAL.Repositories;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MediaPlayer.BLL.Services
 {
@@ -25,6 +20,11 @@ namespace MediaPlayer.BLL.Services
         public void Remove(Playlist playlist)
         {
             _playlistRepo.Delete(playlist);
+        }
+
+        public void UpdateName(string name, int playlistId)
+        {
+            _playlistRepo.UpdateName(name, playlistId);
         }
     }
 }

@@ -1,8 +1,4 @@
-﻿
-
-using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
-using System.Runtime.CompilerServices;
+﻿using System.ComponentModel.DataAnnotations;
 
 
 namespace MediaPlayer.DAL.Entities
@@ -11,12 +7,12 @@ namespace MediaPlayer.DAL.Entities
     {
 
 
-		public int MediaFileId { get; set; }  // Khóa chính
+        public int MediaFileId { get; set; }  // Khóa chính
 
 
         public string FileName { get; set; }  // Tên tệp
 
-   
+
         public string FilePath { get; set; }  // Đường dẫn tệp
 
         public TimeSpan Duration { get; set; }  // Thời lượng của tệp
