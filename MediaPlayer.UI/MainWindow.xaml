@@ -47,10 +47,10 @@
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" Margin="10" >
-                                <Button x:Name="PlayInListButton" Tag="{Binding}" Grid.ZIndex="1" Background="Transparent" Width="60" FontWeight="ExtraBold" BorderThickness="0" HorizontalAlignment="Center" Click="PlayInListButton_Click">
+                                <Button x:Name="PlayInListButton" Tag="{Binding}" Grid.ZIndex="0" Background="Transparent" Width="60" FontWeight="ExtraBold" BorderThickness="0" HorizontalAlignment="Center" Click="PlayInListButton_Click">
                                     <TextBlock x:Name="PlayInListButtonTextBox" FontFamily="Segoe MDL2 Assets" Text="&#xF5B0;" FontSize="15"  Foreground="White"/>
                                 </Button>
-                                <TextBlock Text="{Binding FileName}" VerticalAlignment="Center" Width="400" TextTrimming="CharacterEllipsis" HorizontalAlignment="Stretch"/>
+                                <TextBlock Text="{Binding FileName}" VerticalAlignment="Center" Width="400" TextTrimming="CharacterEllipsis" HorizontalAlignment="Stretch" />
                                 <TextBlock Text="{Binding Artists}" VerticalAlignment="Center" Width="200" HorizontalAlignment="Stretch"/>
                                 <TextBlock Text="{Binding Duration}" VerticalAlignment="Center" Width="100" HorizontalAlignment="Stretch"/>
                                 <Button x:Name="RemoveInListButton" Background="Transparent" Width="60" FontWeight="ExtraBold" BorderThickness="0" HorizontalAlignment="Center" Click="RemoveInListButton_Click" Visibility="Visible">

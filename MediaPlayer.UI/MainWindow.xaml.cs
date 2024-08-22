@@ -68,6 +68,7 @@ namespace MediaPlayer.UI
         }
         private void HomeButton_Click(object sender, RoutedEventArgs e)
         {
+            MultiAdd.Visibility = Visibility.Visible;
             _mode = 1;
             ShowPanel(StPanelMediaFileList);
             PlaylistCreationGrid.Visibility = Visibility.Hidden;
@@ -79,6 +80,7 @@ namespace MediaPlayer.UI
         }
         private void PlaylistButton_Click(object sender, RoutedEventArgs e)
         {
+            MultiAdd.Visibility = Visibility.Visible;
             _mode = 3;
             _status = 1;
             ShowPanel(StPanelPlaylistList);
@@ -87,6 +89,7 @@ namespace MediaPlayer.UI
 
             var playlists = _playlistService.GetAllPlaylist().ToList();
 
+            MultiHeaderTitle.Visibility = Visibility.Visible;
 
             PlaylistList.ItemsSource = playlists;
 
@@ -94,8 +97,11 @@ namespace MediaPlayer.UI
         }
         private void PlayQueueButton_Click(object sender, RoutedEventArgs e)
         {
+            MultiAdd.Visibility = Visibility.Visible;
             _mode = 2;
             ShowPanel(StPanelMediaFileList);
+            MultiHeaderTitle.Visibility = Visibility.Visible;
+
             PlaylistCreationGrid.Visibility = Visibility.Hidden;
             MultiAdd.Content = "Add File";
             MultiHeaderTitle.Content = "Play Queue";
@@ -878,7 +884,7 @@ namespace MediaPlayer.UI
                 if (song != null)
                 {
                     ShowPanel(StPanelPlaylistList);
-                    MultiAdd.Visibility = Visibility.Collapsed;
+                    MultiAdd.Visibility = Visibility.Hidden;
                     MultiHeaderTitle.Content = "Add Song to Playlist";
 
                     var playlists = _playlistService.GetAllPlaylist().ToList();
