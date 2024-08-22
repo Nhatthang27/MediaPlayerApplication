@@ -98,18 +98,27 @@ namespace MediaPlayer.UI
                 Panel.SetZIndex(element1, zindex2);
                 Panel.SetZIndex(element2, zindex1);
             }
+
+            if (_mode == 2 && element1 != Screen && _playQueueService.PlayQueue.Count > 0)
+            {
+                FirstInQueue.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                FirstInQueue.Visibility = Visibility.Collapsed;
+            }
         }
 
         private void PauseButton_Click(object sender, RoutedEventArgs e)
         {
             ShowItem(PlayButton, PauseButton);
             MediaElementVideo.Pause();
-
         }
 
         //chạy tiếp tục cur file
         private void PlayButton_Click(object sender, RoutedEventArgs e)
         {
+            UpdateTitleAndArtist();
             //nếu file có tồn tại
             if (_curMediaFile != null)
             {
@@ -249,8 +258,13 @@ namespace MediaPlayer.UI
         {
             if (_curMediaFile != null)
             {
-                TitleCurSong.Text = _curMediaFile.Title;
+                TitleCurSong.Text = _curMediaFile.FileName;
                 ArtistCurSong.Text = _curMediaFile.Artists;
+            }
+            else
+            {
+                TitleCurSong.Text = "";
+                ArtistCurSong.Text = "";
             }
         }
 
@@ -285,7 +299,14 @@ namespace MediaPlayer.UI
                 //add queue
                 _playQueueService.Add(newFile);
 
+                if (_playQueueService.Count() == 1)
+                {
+                    _curMediaFile = _playQueueService.GetObjectAt(0);
+                    MediaElementVideo.Source = new Uri(_curMediaFile.FilePath, UriKind.RelativeOrAbsolute);
+                }
+
             }
+            //chyen sang mode queue
             PlayQueueButton_Click(sender, e);
         }
 
@@ -339,6 +360,11 @@ namespace MediaPlayer.UI
                 // Add the media file to the in-memory queue
                 _playQueueService.Add(mediaFile);
 
+                if (_playQueueService.Count() == 1)
+                {
+                    _curMediaFile = _playQueueService.GetObjectAt(0);
+                    MediaElementVideo.Source = new Uri(_curMediaFile.FilePath, UriKind.RelativeOrAbsolute);
+                }
                 // Optionally, show a message or update the UI
                 MessageBox.Show($"{mediaFile.FileName} has been added to the queue.");
             }
@@ -546,6 +572,9 @@ namespace MediaPlayer.UI
 
         private void Recent_RemoveInListButton_Click(object sender, RoutedEventArgs e)
         {
+            MessageBoxResult answer = MessageBox.Show("Do you really want to delete?", "Confirm?", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (answer == MessageBoxResult.No)
+                return;
             // Ép kiểu sender thành Button
             var button = sender as Button;
 
@@ -558,18 +587,37 @@ namespace MediaPlayer.UI
 
         private void Queue_RemoveInListButton_Click(object sender, RoutedEventArgs e)
         {
-
             MessageBoxResult answer = MessageBox.Show("Do you really want to delete?", "Confirm?", MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (answer == MessageBoxResult.No)
                 return;
-
             Button button = sender as Button;
             if (button != null)
             {
                 var mediaFile = button?.Tag as MediaFile;
+                if (_playQueueService.GetIndexInQueue(mediaFile) == 0)
+                {
+                    if (_playQueueService.Count() > 1)
+                    {
+                        _curMediaFile = _playQueueService.PlayQueue[1];
+                        MediaElementVideo.Source = new Uri(_curMediaFile.FilePath, UriKind.RelativeOrAbsolute);
+                    }
+                    else
+                    {
+                        _curMediaFile = null;
+                        MediaElementVideo.Source = null;
+                    }
+
+                    UpdateTitleAndArtist();
+                    PauseButton_Click(sender, e);
+                }
                 _playQueueService.Remove(mediaFile);
                 FillMediaFileList(_playQueueService.PlayQueue);
                 MediaFileList.Items.Refresh();
+
+                if (_playQueueService == null || _playQueueService.IsEmpty())
+                {
+
+                }
             }
         }
 

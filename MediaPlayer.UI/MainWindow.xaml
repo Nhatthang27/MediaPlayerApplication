@@ -9,68 +9,77 @@
         Title="Media Player" Height="606" Width="1238" WindowStartupLocation="CenterScreen" ResizeMode="CanMinimize" Loaded="Window_Loaded">
     <Grid x:Name="ParentGrid" Background="#44444444">
         <!-- Screen, play queue, and recent list -->
-        <Grid x:Name="MainGrid" Background="Black" Margin="158,0,0,0" Height="451" VerticalAlignment="Top" RenderTransformOrigin="0.505,0.525">
+        <Grid x:Name="MainGrid" Background="#363434" Margin="158,0,0,0" Height="451" VerticalAlignment="Top" RenderTransformOrigin="0.505,0.525">
             <Grid.RowDefinitions>
                 <RowDefinition Height="81*" />
                 <RowDefinition Height="100*"/>
             </Grid.RowDefinitions>
 
-            <Grid x:Name="Screen" Grid.ZIndex="1" HorizontalAlignment="Center" Height="379" VerticalAlignment="Top" Width="1080" RenderTransformOrigin="0.482,0.522" Margin="0,70,0,0" Grid.RowSpan="2">
+            <!-- Move the Grid to a new location in MainGrid -->
+            <Grid Margin="10,16,10,106" Grid.Column="0" Grid.ZIndex="3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Label Grid.Column="0" x:Name="MultiHeaderTitle" Content="" Foreground="White" FontSize="40" FontWeight="Bold" HorizontalAlignment="Left" />
+                <Button x:Name="MultiAdd" Content="" Width="128" Background="#FFD6511E" Foreground="White" FontWeight="Bold" HorizontalAlignment="Left" VerticalAlignment="Top" Height="39" Margin="866,14,0,0" Click="MultiAdd_Click"/>
+            </Grid>
+
+            <Grid x:Name="Screen" Grid.ZIndex="1" HorizontalAlignment="Center" Height="348" VerticalAlignment="Top" Width="1080" RenderTransformOrigin="0.482,0.522" Margin="0,101,0,0" Grid.RowSpan="2">
                 <MediaElement Name="MediaElementVideo"
                        LoadedBehavior="Manual"
                        UnloadedBehavior="Stop"
                        MediaEnded="MediaPlayer_MediaEnded"
-                       Stretch="Uniform" MediaOpened="MediaElementVideo_MediaOpened"
+                       Stretch="Uniform" MediaOpened="MediaElementVideo_MediaOpened" Margin="0,-1,0,0"
                           />
             </Grid>
 
-            <StackPanel x:Name="StPanelMediaFileList" Grid.ZIndex="2" Background="#363434" Grid.RowSpan="2">
-                <!-- Header -->
-                <Grid Margin="10,0,10,10">
+            <StackPanel x:Name="StPanelMediaFileList" Grid.ZIndex="2" Background="#363434" Grid.RowSpan="2" Margin="0,101,0,0">
+                <!--add an icon of left of list-->
+                <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-
-                    <Label Grid.Column="0" x:Name="MultiHeaderTitle" Content="" Foreground="White" FontSize="40" FontWeight="Bold" HorizontalAlignment="Left" />
-                    <Button x:Name="MultiAdd" Content="" Width="128" Background="#FFD6511E" Foreground="White" FontWeight="Bold" HorizontalAlignment="Left" VerticalAlignment="Top" Height="39" Margin="866,14,0,0" Click="MultiAdd_Click"/>
+                    <fa:IconBlock x:Name="FirstInQueue" Visibility="Visible" FontSize="15" Icon="ArrowRight" Foreground="White" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="18,14,0,0"/>
+                    <ListView x:Name="MediaFileList" Height="342" BorderThickness="0" Foreground="White" Background="#363434" RenderTransformOrigin="0.509,0.451"  
+                    MouseMove="MediaFileList_MouseMove"
+                    PreviewMouseLeftButtonUp="MediaFileList_PreviewMouseLeftButtonDown"
+                    PreviewMouseLeftButtonDown="MediaFileList_PreviewMouseLeftButtonDown"
+                    DragOver="MediaFileList_DragOver"
+                    Drop="MediaFileList_Drop"
+                    AllowDrop="True" Margin="44,0,66,0">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Margin="10">
+                                    <Button x:Name="PlayInListButton" Tag="{Binding}" Background="Transparent" Width="60" FontWeight="ExtraBold" BorderThickness="0" HorizontalAlignment="Center" Click="PlayInListButton_Click">
+                                        <TextBlock x:Name="PlayInListButtonTextBox" FontFamily="Segoe MDL2 Assets" Text="&#xF5B0;" FontSize="15"  Foreground="White"/>
+                                    </Button>
+                                    <TextBlock Text="{Binding FileName}" VerticalAlignment="Center" Width="400" TextTrimming="CharacterEllipsis" HorizontalAlignment="Stretch"/>
+                                    <TextBlock Text="{Binding Artists}" VerticalAlignment="Center" Width="200" HorizontalAlignment="Stretch"/>
+                                    <TextBlock Text="{Binding Duration}" VerticalAlignment="Center" Width="100" HorizontalAlignment="Stretch"/>
+                                    <Button x:Name="RemoveInListButton" Tag="{Binding}" Background="Transparent" Width="60" FontWeight="ExtraBold" BorderThickness="0" HorizontalAlignment="Center" Click="RemoveInListButton_Click">
+                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE74D;" FontSize="15"  Foreground="White"/>
+                                    </Button>
+                                    <Button x:Name="AddToQueueFromHomeBtn" Background="Transparent" Width="60" FontWeight="ExtraBold" BorderThickness="0" HorizontalAlignment="Center" MouseEnter="AddToQueueFromHomeBtn_MouseEnter" MouseLeave="AddToQueueFromHomeBtn_MouseLeave">
+                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE109;" FontSize="15"  Foreground="White"/>
+                                    </Button>
+                                    <Popup x:Name="OptionsPopup" PlacementTarget="{Binding ElementName=AddToQueueFromHomeBtn}" Placement="Bottom" StaysOpen="False">
+                                        <Border Background="Gray" CornerRadius="5" Padding="10">
+                                            <StackPanel>
+                                                <Button x:Name="AddQueueButton" Content="Add to Queue" Width="120" Margin="5" Background="Transparent" BorderThickness="0" Foreground="White" Click="AddQueueButton_Click"/>
+                                                <Button x:Name="PlaylistButton" Content="Add to Playlist" Width="120" Margin="5" Background="Transparent" BorderThickness="0" Foreground="White"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </Popup>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
                 </Grid>
-                <ListView x:Name="MediaFileList" Height="342" BorderThickness="0" Foreground="White" Background="#363434" Width="999" RenderTransformOrigin="0.509,0.451"  
-                            MouseMove="MediaFileList_MouseMove"
-                          PreviewMouseLeftButtonUp="MediaFileList_PreviewMouseLeftButtonDown"
-                          PreviewMouseLeftButtonDown="MediaFileList_PreviewMouseLeftButtonDown"
-                          DragOver="MediaFileList_DragOver"
-                          Drop="MediaFileList_Drop"
-                          AllowDrop="True">
-
-                    <ListView.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal" Margin="10" >
-                                <Button x:Name="PlayInListButton" Tag="{Binding}" Grid.ZIndex="1" Background="Transparent" Width="60" FontWeight="ExtraBold" BorderThickness="0" HorizontalAlignment="Center" Click="PlayInListButton_Click">
-                                    <TextBlock x:Name="PlayInListButtonTextBox" FontFamily="Segoe MDL2 Assets" Text="&#xF5B0;" FontSize="15"  Foreground="White"/>
-                                </Button>
-                                <TextBlock Text="{Binding FileName}" VerticalAlignment="Center" Width="400" TextTrimming="CharacterEllipsis" HorizontalAlignment="Stretch"/>
-                                <TextBlock Text="{Binding Artists}" VerticalAlignment="Center" Width="200" HorizontalAlignment="Stretch"/>
-                                <TextBlock Text="{Binding Duration}" VerticalAlignment="Center" Width="100" HorizontalAlignment="Stretch"/>
-                                <Button x:Name="RemoveInListButton" Tag="{Binding}" Background="Transparent" Width="60" FontWeight="ExtraBold" BorderThickness="0" HorizontalAlignment="Center" Click="RemoveInListButton_Click">
-                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE74D;" FontSize="15"  Foreground="White"/>
-                                </Button>
-                                <Button x:Name="AddToQueueFromHomeBtn" Background="Transparent" Width="60" FontWeight="ExtraBold" BorderThickness="0" HorizontalAlignment="Center" MouseEnter="AddToQueueFromHomeBtn_MouseEnter" MouseLeave="AddToQueueFromHomeBtn_MouseLeave">
-                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE109;" FontSize="15"  Foreground="White"/>
-                                </Button>
-                                <Popup x:Name="OptionsPopup" PlacementTarget="{Binding ElementName=AddToQueueFromHomeBtn}" Placement="Bottom" StaysOpen="False">
-                                    <Border Background="Gray" CornerRadius="5" Padding="10">
-                                        <StackPanel>
-                                            <Button x:Name="AddQueueButton" Content="Add to Queue" Width="120" Margin="5" Background="Transparent" BorderThickness="0" Foreground="White" Click="AddQueueButton_Click"/>
-                                            <Button x:Name="PlaylistButton" Content="Add to Playlist" Width="120" Margin="5" Background="Transparent" BorderThickness="0" Foreground="White"/>
-                                        </StackPanel>
-                                    </Border>
-                                </Popup>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
             </StackPanel>
+
         </Grid>
 
         <!-- Popup to show create playlist -->

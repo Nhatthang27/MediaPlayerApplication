@@ -42,7 +42,6 @@ namespace MediaPlayer.BLL.Services
             return PlayQueue == null || PlayQueue.Count == 0;
         }
 
-
         public void Shuffle()
         {
             if (PlayQueue != null && PlayQueue.Count > 1)
@@ -57,6 +56,17 @@ namespace MediaPlayer.BLL.Services
                     PlayQueue[j] = temp;
                 }
             }
+        }
+
+
+        public int Count()
+        {
+            return PlayQueue.Count;
+        }
+
+        public MediaFile GetObjectAt(int index)
+        {
+            return PlayQueue[index];
         }
     }
 }
