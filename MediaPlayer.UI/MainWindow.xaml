@@ -16,12 +16,12 @@
             </Grid.RowDefinitions>
 
             <Grid x:Name="Screen" Grid.ZIndex="1" HorizontalAlignment="Center" Height="379" VerticalAlignment="Top" Width="1080" RenderTransformOrigin="0.482,0.522" Margin="0,70,0,0" Grid.RowSpan="2">
-                    <MediaElement Name="MediaElementVideo"
+                <MediaElement Name="MediaElementVideo"
                        LoadedBehavior="Manual"
                        UnloadedBehavior="Stop"
                        MediaEnded="MediaPlayer_MediaEnded"
                        Stretch="Uniform" MediaOpened="MediaElementVideo_MediaOpened"
-                          />    
+                          />
             </Grid>
 
             <StackPanel x:Name="StPanelMediaFileList" Grid.ZIndex="2" Background="#363434" Grid.RowSpan="2">
@@ -61,7 +61,21 @@
                                     <Border Background="Gray" CornerRadius="5" Padding="10">
                                         <StackPanel>
                                             <Button x:Name="AddQueueButton" Content="Add to Queue" Width="120" Margin="5" Background="Transparent" BorderThickness="0" Foreground="White" Click="AddQueueButton_Click"/>
-                                            <Button x:Name="PlaylistButton" Content="Add to Playlist" Width="120" Margin="5" Background="Transparent" BorderThickness="0" Foreground="White"/>
+                                            <Button x:Name="AddToPlaylistButton" Content="Add to Playlist" Width="120" Margin="5" Background="Transparent" BorderThickness="0" Foreground="White" />
+                                            <Popup x:Name="PlaylistPopup" PlacementTarget="{Binding ElementName=AddToPlaylistButton}" Placement="Bottom" StaysOpen="False">
+                                                <Border Background="White" BorderBrush="Black" BorderThickness="1">
+                                                    <StackPanel>
+                                                        <!-- Bind to a collection of playlist names -->
+                                                        <ItemsControl ItemsSource="{Binding Playlists}">
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <TextBlock Text="{Binding}" Padding="5" />
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </StackPanel>
+                                                </Border>
+                                            </Popup>
                                         </StackPanel>
                                     </Border>
                                 </Popup>

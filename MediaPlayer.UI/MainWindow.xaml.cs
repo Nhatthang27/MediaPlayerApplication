@@ -246,7 +246,7 @@ namespace MediaPlayer.UI
         {
             if (_curMediaFile != null)
             {
-                TitleCurSong.Text = _curMediaFile.Title;
+                TitleCurSong.Text = _curMediaFile.FileName;
                 ArtistCurSong.Text = _curMediaFile.Artists;
             }
         }
@@ -715,5 +715,20 @@ namespace MediaPlayer.UI
                 MessageBox.Show("There are no next songs in the queue!");
             }
         }
-    }
+		//private void AddToPlaylist_MouseEnter(object sender, MouseEventArgs e)
+		//{
+		//	// Load playlist names if needed
+		//	//LoadPlaylists();
+
+		//	// Show the popup
+		//	PlaylistPopup.IsOpen = true;
+		//}
+
+		//private void AddToPlaylist_MouseLeave(object sender, MouseEventArgs e)
+		//{
+		//	// Hide the popup
+		//	PlaylistPopup.IsOpen = false;
+		//}
+
+	}
 }
