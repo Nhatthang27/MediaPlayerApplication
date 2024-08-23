@@ -27,65 +27,49 @@ namespace MediaPlayer.UI
 		private Playlist _playlistVisit;
 		//mode 1 == home, mode 2 == play queue, mode 3 == playlist, mode 4 == playlistItems
 
-		private int _status = 1;//status for doubleclick in playlist
-								//status 1 == view playlist, status 2 == add song to playlist, status 3 == create playlist, status 4 == rename playlist
+        private DispatcherTimer timer; // thực thi các hoạt động trong 1 khoảng thời gian định sẵn
+        private Visibility _buttonVisibility = Visibility.Visible;
 
-		private DispatcherTimer timer; // thực thi các hoạt động trong 1 khoảng thời gian định sẵn
-		private Visibility _buttonVisibility = Visibility.Visible;
-		public MainWindow()
-		{
-			InitializeComponent();
-		}
-		private void SetUpTimerMediaFile()
-		{
-			// Khởi tạo timer để cập nhật thời gian phát hiện tại
-			timer = new DispatcherTimer();
-			timer.Interval = TimeSpan.FromMilliseconds(500); // xác định khoảng thgian của mỗi lần tick
-			timer.Tick += Timer_Tick;
-		}
-		private void ShowPanel(UIElement panelToShow)
-		{
-			// Hide all panels first
-			StPanelMediaFileList.Visibility = Visibility.Hidden;
-			StPanelPlaylistList.Visibility = Visibility.Hidden;
+        private double _volumeValue;
+        public MainWindow()
+        {
+            InitializeComponent();
+        }
+        private void SetUpTimerMediaFile()
+        {
+            // Khởi tạo timer để cập nhật thời gian phát hiện tại
+            timer = new DispatcherTimer();
+            timer.Interval = TimeSpan.FromMilliseconds(500); // xác định khoảng thgian của mỗi lần tick
+            timer.Tick += Timer_Tick;
+        }
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            SetUpTimerMediaFile();
+            _curMediaFile = _mediaFileService.GetRecentMediaFiles().FirstOrDefault();
+            if (_curMediaFile != null)
+                MediaElementVideo.Source = new Uri(_curMediaFile.FilePath, UriKind.RelativeOrAbsolute);
+            if (_curMediaFile != null)
+            {
+                _playQueueService.AddPriority(_curMediaFile);
+            }
+            HomeButton_Click(sender, e);
+        }
+        private void HomeButton_Click(object sender, RoutedEventArgs e)
+        {
+            _mode = 1;
+            MultiAdd.Content = "Open File";
+            MultiHeaderTitle.Content = "Recent Files";
+            UpdateTitleAndArtist();
+            ShowItem(StPanelMediaFileList, Screen);
+            FillMediaFileList(_mediaFileService.GetRecentMediaFiles());
+        }
+        private void PlaylistButton_Click(object sender, RoutedEventArgs e)
+        {
+            _mode = 3;
+            MultiAdd.Content = "Create Playlist";
+            MultiHeaderTitle.Content = "Playlist";
 
-			// Show the selected panel
-			panelToShow.Visibility = Visibility.Visible;
-		}
-
-		private void Window_Loaded(object sender, RoutedEventArgs e)
-		{
-			SetUpTimerMediaFile();
-			ShowPanel(StPanelMediaFileList);
-			_curMediaFile = _mediaFileService.GetRecentMediaFiles().FirstOrDefault();
-			if (_curMediaFile != null)
-				MediaElementVideo.Source = new Uri(_curMediaFile.FilePath, UriKind.RelativeOrAbsolute);
-			if (_curMediaFile != null)
-			{
-				_playQueueService.AddPriority(_curMediaFile);
-			}
-			HomeButton_Click(sender, e);
-		}
-		private void HomeButton_Click(object sender, RoutedEventArgs e)
-		{
-			_mode = 1;
-			ShowPanel(StPanelMediaFileList);
-			PlaylistCreationGrid.Visibility = Visibility.Hidden;
-			MultiAdd.Content = "Open File";
-			MultiHeaderTitle.Content = "Recent Files";
-			UpdateTitleAndArtist();
-			ShowItem(StPanelMediaFileList, Screen);
-			FillMediaFileList(_mediaFileService.GetRecentMediaFiles());
-		}
-		private void PlaylistButton_Click(object sender, RoutedEventArgs e)
-		{
-			_mode = 3;
-			_status = 1;
-			ShowPanel(StPanelPlaylistList);
-			MultiAdd.Content = "Create Playlist";
-			MultiHeaderTitle.Content = "Playlist";
-			UpdateMediaFileCount();
-			var playlists = _playlistService.GetAllPlaylist().ToList();
+            var playlists = _playlistService.GetAllPlaylist().ToList();
 
 
 			PlaylistList.ItemsSource = playlists;
@@ -177,12 +161,13 @@ namespace MediaPlayer.UI
 			}
 		}
 
-		//hàm fill MediaFileList - isQueue = true: fill queue, false: fill recent files
-		private void FillMediaFileList(IEnumerable<MediaFile> mediaListFile)
-		{
-			MediaFileList.ItemsSource = null;
-			MediaFileList.ItemsSource = mediaListFile;
-		}
+        //hàm fill MediaFileList - isQueue = true: fill queue, false: fill recent files
+        private void FillMediaFileList(IEnumerable<MediaFile> mediaListFile)
+        {
+            MediaFileList.ItemsSource = null;
+            MediaFileList.ItemsSource = mediaListFile;
+
+        }
 
 		//chạy được một bài hát từ đầu // dependence: OpenFile, Next, Previous, PlayInList
 		private void RunFile(string filePath)
@@ -293,121 +278,108 @@ namespace MediaPlayer.UI
 			}
 		}
 
-		//add to queue
-		private void AddFile()
-		{
-			Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
-			openFileDialog.Filter = Utils.COMMON_MEDIAFILE;
-			if (openFileDialog.ShowDialog() == true)
-			{
-				string filePath = openFileDialog.FileName;
-				MediaFile newFile = Utils.GetPropertiesFromFilePath(filePath);
-				//add queue
-				_playQueueService.Add(newFile);
+        //add to queue
+        private void AddFile(object sender, RoutedEventArgs e)
+        {
+            Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
+            openFileDialog.Filter = Utils.COMMON_MEDIAFILE;
+            if (openFileDialog.ShowDialog() == true)
+            {
+                string filePath = openFileDialog.FileName;
+                MediaFile newFile = Utils.GetPropertiesFromFilePath(filePath);
+                //add queue
+                _playQueueService.Add(newFile);
 
-			}
-			FillMediaFileList(_playQueueService.PlayQueue);
-		}
+            }
+            PlayQueueButton_Click(sender, e);
+        }
 
-		//handle + icon on each media file 
-		private void AddToQueueFromHomeBtn_MouseEnter(object sender, MouseEventArgs e)
-		{
-			Button button = sender as Button;
-			if (button != null)
-			{
-				// Find the Popup within the same DataTemplate
-				var stackPanel = button.Parent as StackPanel;
-				if (stackPanel != null)
-				{
-					var popup = stackPanel.Children.OfType<Popup>().FirstOrDefault();
-					if (popup != null)
-					{
-
-						popup.IsOpen = true;
-
-					}
-				}
-			}
-		}
-		private void AddToQueueFromHomeBtn_MouseLeave(object sender, MouseEventArgs e)
-		{
-			Button button = sender as Button;
-			if (button != null)
-			{
-				// Find the Popup within the same DataTemplate
-				var stackPanel = button.Parent as StackPanel;
-				if (stackPanel != null)
-				{
-					var popup = stackPanel.Children.OfType<Popup>().FirstOrDefault();
-					if (popup != null)
-					{
-						if (!popup.IsMouseOver && !button.IsMouseOver)
-							popup.IsOpen = false;
-					}
-				}
-			}
-		}
-		private void AddQueueButton_Click(object sender, RoutedEventArgs e)
-		{
-			var button = sender as Button;
-			var mediaFile = button?.DataContext as MediaFile; // Replace with the correct way to get the MediaFile
+        private void CreateAPlaylist()
+        {
+            //create a playlist
+        }
+        //handle + icon on each media file 
+        private void AddToQueueFromHomeBtn_MouseEnter(object sender, MouseEventArgs e)
+        {
+            Button button = sender as Button;
+            if (button != null)
+            {
+                // Find the Popup within the same DataTemplate
+                var stackPanel = button.Parent as StackPanel;
+                if (stackPanel != null)
+                {
+                    var popup = stackPanel.Children.OfType<Popup>().FirstOrDefault();
+                    if (popup != null)
+                    {
+                        popup.IsOpen = true;
+                    }
+                }
+            }
+        }
+        private void AddToQueueFromHomeBtn_MouseLeave(object sender, MouseEventArgs e)
+        {
+            Button button = sender as Button;
+            if (button != null)
+            {
+                // Find the Popup within the same DataTemplate
+                var stackPanel = button.Parent as StackPanel;
+                if (stackPanel != null)
+                {
+                    var popup = stackPanel.Children.OfType<Popup>().FirstOrDefault();
+                    if (popup != null)
+                    {
+                        if (!popup.IsMouseOver && !button.IsMouseOver)
+                            popup.IsOpen = false;
+                    }
+                }
+            }
+        }
+        private void AddQueueButton_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            var mediaFile = button?.DataContext as MediaFile; // Replace with the correct way to get the MediaFile
 
 			if (mediaFile != null)
 			{
 				// Add the media file to the in-memory queue
 				_playQueueService.Add(mediaFile);
 
-				// Optionally, show a message or update the UI
-				MessageBox.Show($"{mediaFile.FileName} has been added to the queue.");
-			}
-			FillMediaFileList(_playQueueService.PlayQueue);
-		}
-		private void MultiAdd_Click(object sender, RoutedEventArgs e)
-		{
-			if (MultiAdd.Content.Equals("Open File"))
-			{
-				OpenFile();
-			}
-			else if (MultiAdd.Content.Equals("Add File"))
-			{
-				AddFile();
-			}
-			else if (MultiAdd.Content.Equals("Create Playlist"))
-			{
-				CreatePlaylistButton.Content = "Create Playlist";
-				_status = 3;
-				if (PlaylistCreationGrid.Visibility == Visibility.Visible)
-				{
-					PlaylistCreationGrid.Visibility = Visibility.Collapsed;
-				}
-				else
-				{
-					PlaylistCreationGrid.Visibility = Visibility.Visible;
-				}
-			}
-			else if (MultiAdd.Content.Equals("Rename"))
-			{
-				CreatePlaylistButton.Content = "Rename";
-				PlaylistNameTextBox.Text = _playlistVisit.Title;
-				_status = 4;
-				if (PlaylistCreationGrid.Visibility == Visibility.Visible)
-				{
-					PlaylistCreationGrid.Visibility = Visibility.Collapsed;
-				}
-				else
-				{
-					PlaylistCreationGrid.Visibility = Visibility.Visible;
-				}
-			}
-		}
-		//handle sắp xếp thứ tự bài hát trong list queue
-		private void MediaFileList_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-		{
-			_dragStartPoint = e.GetPosition(null);
-		}
-		private void MediaFileList_MouseMove(object sender, MouseEventArgs e)
-		{
-			Point currentPosition = e.GetPosition(null);
+                // Optionally, show a message or update the UI
+                MessageBox.Show($"{mediaFile.FileName} has been added to the queue.");
+            }
+            //FillMediaFileList(_playQueueService.PlayQueue); -> doi sang bam nut Play Queue
+            PlayQueueButton_Click(sender, e);
+        }
+        private void MultiAdd_Click(object sender, RoutedEventArgs e)
+        {
+            if (MultiAdd.Content.Equals("Open File"))
+            {
+                OpenFile();
+            }
+            else if (MultiAdd.Content.Equals("Add File"))
+            {
+                AddFile(sender, e);
+            }
+            else if (MultiAdd.Content.Equals("Create Playlist"))
+            {
+                if (PlaylistCreationGrid.Visibility == Visibility.Visible)
+                {
+                    PlaylistCreationGrid.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    PlaylistCreationGrid.Visibility = Visibility.Visible;
+                }
+            }
+        }
+        //handle sắp xếp thứ tự bài hát trong list queue
+        private void MediaFileList_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            _dragStartPoint = e.GetPosition(null);
+        }
+        private void MediaFileList_MouseMove(object sender, MouseEventArgs e)
+        {
+            Point currentPosition = e.GetPosition(null);
 
 			//Check if the drag distance is significant enough
 			//xử lý con chuột ở mỗi hàng mediafile
@@ -755,26 +727,37 @@ namespace MediaPlayer.UI
 			}
 		}
 
-		private void AdjustVolume(MouseEventArgs e)
-		{
-			var pos = e.GetPosition(VolumeProgressBar);
-			double volume = (pos.X / VolumeProgressBar.ActualWidth);
-			VolumeProgressBar.Value = volume;
-			MediaElementVideo.Volume = VolumeProgressBar.Value;
-		}
+        private void AdjustVolume(MouseEventArgs e)
+        {
+            var pos = e.GetPosition(VolumeProgressBar);
+            double volume = (pos.X / VolumeProgressBar.ActualWidth);
+            if (volume > 0)
+            {
+                VolumeIconBlock.Icon = FontAwesome.Sharp.IconChar.VolumeUp;
+            }
+            else
+            {
+                VolumeIconBlock.Icon = FontAwesome.Sharp.IconChar.VolumeMute;
+            }
+            VolumeProgressBar.Value = volume;
+            MediaElementVideo.Volume = VolumeProgressBar.Value;
+        }
 
-		private void VolumeButton_Click(object sender, RoutedEventArgs e)
-		{
-			if (VolumeIconBlock.Icon == FontAwesome.Sharp.IconChar.VolumeUp)
-			{
-				MediaElementVideo.Volume = 0;
-				VolumeIconBlock.Icon = FontAwesome.Sharp.IconChar.VolumeMute;
-			}
-			else
-			{
-				MediaElementVideo.Volume = VolumeProgressBar.Value;
-				VolumeIconBlock.Icon = FontAwesome.Sharp.IconChar.VolumeUp;
-			}
+        private void VolumeButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (VolumeIconBlock.Icon == FontAwesome.Sharp.IconChar.VolumeUp)
+            {
+                _volumeValue = VolumeProgressBar.Value;
+                VolumeProgressBar.Value = 0;
+                MediaElementVideo.Volume = 0;
+                VolumeIconBlock.Icon = FontAwesome.Sharp.IconChar.VolumeMute;
+            }
+            else
+            {
+                VolumeProgressBar.Value = _volumeValue;
+                MediaElementVideo.Volume = VolumeProgressBar.Value;
+                VolumeIconBlock.Icon = FontAwesome.Sharp.IconChar.VolumeUp;
+            }
 
 		}
 
