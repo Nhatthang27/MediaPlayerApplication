@@ -36,6 +36,30 @@ namespace MediaPlayer.DAL.Repositories
         {
             throw new NotImplementedException();
         }
+
+        public void UpdateName(string name, int playlistId)
+        {
+            using (_context = new())
+            {
+                // Find the playlist entity by its ID
+                var playlist = _context.Playlists
+                    .FirstOrDefault(p => p.PlaylistId == playlistId);
+
+                if (playlist != null)
+                {
+                    // Update the name
+                    playlist.Title = name;
+
+                    // Save changes to the database
+                    _context.SaveChanges();
+                }
+                else
+                {
+                    // Handle the case when the playlist is not found
+                    throw new Exception("Playlist not found.");
+                }
+            }
+        }
     }
 
 }
